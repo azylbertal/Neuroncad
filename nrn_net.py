@@ -90,6 +90,12 @@ def build_loop():
     run_button.rect.x=width-run_button.rect.width
     run_button.rect.y=height-run_button.rect.height
     buttons.add(run_button)
+    exit_button=pygame.sprite.Sprite()
+    exit_button.image=pygame.image.load("exit.bmp").convert()
+    exit_button.rect=exit_button.image.get_rect()
+    exit_button.rect.x=width-run_button.rect.width-exit_button.rect.width
+    exit_button.rect.y=height-exit_button.rect.height
+    buttons.add(exit_button)
     
     txtbx=eztext.Input(maxlength=6, color=BLUE,y=100, prompt='type here ')
     txtbx.focus=True
@@ -117,6 +123,8 @@ def build_loop():
                 
                 if run_button.rect.collidepoint([x, y]):
                     run_loop(all_neurons)
+                elif exit_button.rect.collidepoint([x, y]):
+                    return 0
                 else:
                     all_neurons.add(Neuron(x,y))
                 
@@ -314,6 +322,6 @@ pr.disable()
 s = StringIO.StringIO()
 sortby = 'cumulative'
 ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
-#ps.print_stats()
-#print s.getvalue()
+ps.print_stats()
+print s.getvalue()
 pygame.quit()
