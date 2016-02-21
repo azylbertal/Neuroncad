@@ -31,8 +31,10 @@ class Neuron(pygame.sprite.Sprite):
         self.axons=[]
         
     def drawAxons(self):
+        recs=[]
         for axon in self.axons:
-            axon.draw(screen)
+            recs.append(axon.draw(screen))
+        return recs
         
 
 class Axon():
@@ -52,7 +54,7 @@ class Axon():
                 
     
     def draw(self, screen):
-        pygame.draw.lines(screen, BLUE, False, self.points, 1)
+        return pygame.draw.lines(screen, BLUE, False, self.points, 1)
 
 
 class AP():
@@ -60,8 +62,10 @@ class AP():
         self.axon=axon
         self.pos=0
     def draw_and_advance(self):
-        pygame.draw.circle(screen, BLUE, [int(p) for p in self.axon.points[self.pos]], 10)
+        oldc=pygame.draw.circle(screen, bgcolor, [int(p) for p in self.axon.points[self.pos]], 10)
         self.pos+=1
+        newc=pygame.draw.circle(screen, BLUE, [int(p) for p in self.axon.points[self.pos]], 10)
+        return [oldc, newc]
        
         
         
@@ -74,9 +78,6 @@ def inter(pt1, pt2):
         int_pts+=[[pt1[0]+l*(ln_x/ln), pt1[1]+l*(ln_y/ln)]]
         
     return int_pts 
-
-def runmod(t):
-	neuron.h.continuerun(t)
 
 def build_loop():
 
@@ -200,6 +201,8 @@ def run_loop(all_neurons):
     
     APs=[]
     recv=[]
+    dirty_recs=[]
+    
     for counter, neur in enumerate(all_neurons.sprites()):
         recv+=[neuron.h.Vector()]
         recv[counter].record(neur.mod(0.5)._ref_v)
@@ -214,7 +217,13 @@ def run_loop(all_neurons):
     v=np.ones(plot_len)*-60
     t=neuron.h.t
     
-
+    screen.fill(bgcolor) 
+    all_neurons.draw(screen)
+    buttons.draw(screen)
+    for neur in all_neurons.sprites():
+        neur.drawAxons()
+        
+    pygame.display.flip()
     while running:
         
         
@@ -227,15 +236,18 @@ def run_loop(all_neurons):
                 max_v=0
             if max_v>25.0 and neur.fire_counter==0:
                 neur.fire_counter=fire_image_delay
+                neur.image=firing_neuron_image
+                #dirty_recs.append(neur.rect)
                 for ax in neur.axons:
                     APs.append(AP(ax))
                 
             if neur.fire_counter>0:
                 
-                neur.image=firing_neuron_image
+                #neur.image=firing_neuron_image
                 neur.fire_counter-=1
-            else:
-                neur.image=neuron_image
+                if neur.fire_counter==0:
+                    neur.image=neuron_image
+                    #dirty_recs.append(neur.rect)
                 
         event = pygame.event.poll()
         (x, y)=pygame.mouse.get_pos()    
@@ -272,20 +284,21 @@ def run_loop(all_neurons):
         #t+=1
         
         
-        screen.fill(bgcolor)    
+        
+        
         all_neurons.draw(screen)
-        buttons.draw(screen)
+
         for counter, neur in enumerate(all_neurons.sprites()):
-            neur.drawAxons()
+            dirty_recs+=neur.drawAxons()
+            dirty_recs.append(neur.rect)
             recv[counter].resize(0)
         
         for ap in APs:
-            ap.draw_and_advance() 
-            if ap.pos==ap.axon.len:
+            dirty_recs+=ap.draw_and_advance() 
+            if ap.pos==(ap.axon.len-1):
                 APs.remove(ap)                
 
-        runmod(t)
-	#neuron.h.continuerun(t)
+        neuron.h.continuerun(t)
         t+=step         
         
         v=np.append(v[1::], [all_neurons.sprites()[0].mod(0.5).v])
@@ -295,12 +308,12 @@ def run_loop(all_neurons):
         plist=[]
         for i in range(plot_len):
             plist+=[[i, 50-49*(v[i]-vmin)/(vmax-vmin)]]
-            
         plt.fill(bgcolor)
         pygame.draw.lines(plt, BLUE, False, plist)
-        screen.blit(plt, (100, 100))
-    
-        pygame.display.flip()    
+        dirty_recs.append(screen.blit(plt, (100, 100)))
+        
+        pygame.display.update(dirty_recs)
+        dirty_recs=[]
     
 
 
