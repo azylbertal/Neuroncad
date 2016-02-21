@@ -14,6 +14,7 @@ BLUE  = (0,   0,   255)
 width = 800
 height = 600
 
+step=0.1
     
 class Neuron(pygame.sprite.Sprite):
     def __init__(self, x, y):
@@ -45,9 +46,9 @@ class Axon():
         self.len=len(self.points)
         self.syn=neuron.h.ExpSyn(endp.mod(0.5))
         self.syn.tau=4
-        self.w=0.05
+        self.w=0.5
         
-        self.con=neuron.h.NetCon(startp.mod(0.5)._ref_v, self.syn, 25.0, self.len, self.w, sec=startp.mod)
+        self.con=neuron.h.NetCon(startp.mod(0.5)._ref_v, self.syn, 25.0, self.len*step, self.w, sec=startp.mod)
                 
     
     def draw(self, screen):
@@ -173,7 +174,7 @@ def run_loop(all_neurons):
     plot_len=300    
     fire_image_delay=100
     running=1
-    t=1;
+    
     buttons = pygame.sprite.Group()
     downflag=False;
     stop_button=pygame.sprite.Sprite()
@@ -201,6 +202,7 @@ def run_loop(all_neurons):
     neuron.h.finitialize(-60)
     neuron.run(plot_len)
     v=np.ones(plot_len)*-60
+    t=neuron.h.t
     
 
     while running:
@@ -247,9 +249,8 @@ def run_loop(all_neurons):
                 return 0
             for counter, neur in enumerate(all_neurons.sprites()):
                 if neur.rect.collidepoint([x, y]):
-
                         stm=neuron.h.IClamp(neur.mod(0.5))
-                        stm.delay=t+1
+                        stm.delay=neuron.h.t#+step
                         stm.dur=10
                         stm.amp=10
                        
@@ -274,7 +275,7 @@ def run_loop(all_neurons):
                 APs.remove(ap)                
 
         neuron.h.continuerun(t)
-        t+=1          
+        t+=step         
         
         v=np.append(v[1::], [all_neurons.sprites()[0].mod(0.5).v])
         vmax=np.max(v)
