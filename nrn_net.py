@@ -75,6 +75,8 @@ def inter(pt1, pt2):
         
     return int_pts 
 
+def runmod(t):
+	neuron.h.continuerun(t)
 
 def build_loop():
 
@@ -282,7 +284,8 @@ def run_loop(all_neurons):
             if ap.pos==ap.axon.len:
                 APs.remove(ap)                
 
-        neuron.h.continuerun(t)
+        runmod(t)
+	#neuron.h.continuerun(t)
         t+=step         
         
         v=np.append(v[1::], [all_neurons.sprites()[0].mod(0.5).v])

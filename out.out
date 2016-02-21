@@ -1,0 +1,221 @@
+NEURON -- Release 7.4 (1370:16a7055d4a86) 2015-11-09
+Duke, Yale, and the BlueBrain Project -- Copyright 1984-2015
+See http://www.neuron.yale.edu/neuron/credits
+
+         277373 function calls (277370 primitive calls) in 54.107 seconds
+
+   Ordered by: cumulative time
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+        1    0.479    0.479   54.107   54.107 nrn_net.py:81(build_loop)
+        1   27.828   27.828   44.807   44.807 nrn_net.py:180(run_loop)
+     6906    6.377    0.001    6.377    0.001 {pygame.display.flip}
+    10515    5.574    0.001    5.574    0.001 {method 'fill' of 'pygame.Surface' objects}
+    13918    5.322    0.000    5.322    0.000 {pygame.draw.lines}
+    12263    0.124    0.000    4.110    0.000 nrn_net.py:33(drawAxons)
+     9623    0.097    0.000    3.986    0.000 nrn_net.py:54(draw)
+    21656    1.408    0.000    1.408    0.000 {numpy.core.multiarray.array}
+     3609    1.370    0.000    1.370    0.000 nrn_net.py:78(runmod)
+    13812    0.395    0.000    1.361    0.000 /usr/lib/python2.7/dist-packages/pygame/sprite.py:464(draw)
+    10827    0.166    0.000    1.150    0.000 /usr/lib/python2.7/dist-packages/numpy/core/fromnumeric.py:2048(amax)
+    29372    1.090    0.000    1.090    0.000 {method 'blit' of 'pygame.Surface' objects}
+    14436    1.025    0.000    1.025    0.000 {method 'reduce' of 'numpy.ufunc' objects}
+    10827    0.139    0.000    0.984    0.000 /usr/lib/python2.7/dist-packages/numpy/core/_methods.py:15(_amax)
+     3609    0.104    0.000    0.653    0.000 /usr/lib/python2.7/dist-packages/numpy/lib/function_base.py:3503(append)
+     3297    0.069    0.000    0.497    0.000 /home/pi/pygame_net/eztext.py:47(draw)
+    27948    0.399    0.000    0.399    0.000 /usr/lib/python2.7/dist-packages/pygame/sprite.py:303(sprites)
+     6229    0.143    0.000    0.277    0.000 nrn_net.py:62(draw_and_advance)
+     3297    0.271    0.000    0.271    0.000 {method 'render' of 'pygame.font.Font' objects}
+     6908    0.269    0.000    0.269    0.000 {pygame.event.poll}
+     3609    0.040    0.000    0.256    0.000 /usr/lib/python2.7/dist-packages/numpy/core/fromnumeric.py:2132(amin)
+     3609    0.040    0.000    0.252    0.000 /usr/lib/python2.7/dist-packages/numpy/core/fromnumeric.py:1281(ravel)
+        1    0.232    0.232    0.232    0.232 /usr/local/lib/python2.7/dist-packages/neuron/__init__.py:334(run)
+     4302    0.225    0.000    0.225    0.000 {range}
+     3609    0.037    0.000    0.216    0.000 /usr/lib/python2.7/dist-packages/numpy/core/_methods.py:19(_amin)
+     3297    0.114    0.000    0.209    0.000 /home/pi/pygame_net/eztext.py:52(update)
+     3609    0.186    0.000    0.186    0.000 {numpy.core.multiarray.concatenate}
+     3609    0.027    0.000    0.168    0.000 /usr/lib/python2.7/dist-packages/numpy/core/numeric.py:392(asarray)
+        1    0.000    0.000    0.135    0.135 /home/pi/pygame_net/eztext.py:22(__init__)
+        1    0.002    0.002    0.135    0.135 /home/pi/pygame_net/eztext.py:9(__init__)
+     6229    0.134    0.000    0.134    0.000 {pygame.draw.circle}
+        1    0.000    0.000    0.133    0.133 /usr/lib/python2.7/dist-packages/pygame/sysfont.py:548(SysFont)
+        1    0.000    0.000    0.131    0.131 /usr/lib/python2.7/dist-packages/pygame/sysfont.py:520(initsysfonts)
+        1    0.005    0.005    0.131    0.131 /usr/lib/python2.7/dist-packages/pygame/sysfont.py:447(initsysfonts_unix)
+     3609    0.044    0.000    0.111    0.000 /usr/lib/python2.7/dist-packages/numpy/core/numeric.py:462(asanyarray)
+     3297    0.086    0.000    0.086    0.000 {pygame.key.get_pressed}
+        1    0.000    0.000    0.055    0.055 /usr/lib/python2.7/subprocess.py:650(__init__)
+        1    0.001    0.001    0.055    0.055 /usr/lib/python2.7/subprocess.py:1195(_execute_child)
+     6908    0.051    0.000    0.051    0.000 {pygame.mouse.get_pos}
+        5    0.050    0.010    0.050    0.010 {posix.read}
+        2    0.000    0.000    0.050    0.025 /usr/lib/python2.7/subprocess.py:473(_eintr_retry_call)
+     3609    0.044    0.000    0.044    0.000 {method 'ravel' of 'numpy.ndarray' objects}
+        1    0.000    0.000    0.037    0.037 /usr/lib/python2.7/subprocess.py:768(communicate)
+        1    0.000    0.000    0.037    0.037 /usr/lib/python2.7/subprocess.py:1400(_communicate)
+        1    0.000    0.000    0.036    0.036 /usr/lib/python2.7/subprocess.py:1433(_communicate_with_poll)
+        5    0.036    0.007    0.036    0.007 {built-in method poll}
+13901/13900    0.034    0.000    0.034    0.000 {len}
+        2    0.005    0.002    0.027    0.013 nrn_net.py:39(__init__)
+      686    0.017    0.000    0.022    0.000 nrn_net.py:68(inter)
+        1    0.003    0.003    0.017    0.017 /usr/lib/python2.7/subprocess.py:387(<module>)
+        1    0.002    0.002    0.014    0.014 /usr/lib/python2.7/pickle.py:25(<module>)
+      117    0.008    0.000    0.012    0.000 /usr/lib/python2.7/re.py:138(match)
+        1    0.000    0.000    0.008    0.008 /usr/lib/python2.7/dist-packages/pygame/sysfont.py:32(toascii)
+        1    0.006    0.006    0.008    0.008 {method 'decode' of 'str' objects}
+       66    0.004    0.000    0.006    0.000 /usr/lib/python2.7/dist-packages/pygame/sysfont.py:36(_simplename)
+        1    0.003    0.003    0.003    0.003 {posix.fork}
+      117    0.001    0.000    0.003    0.000 /usr/lib/python2.7/re.py:230(_compile)
+        2    0.001    0.000    0.003    0.001 nrn_net.py:20(__init__)
+        7    0.002    0.000    0.002    0.000 {method 'convert' of 'pygame.Surface' objects}
+        1    0.001    0.001    0.002    0.002 /usr/lib/python2.7/dist-packages/pygame/sysfont.py:534(font_constructor)
+        7    0.002    0.000    0.002    0.000 {pygame.imageext.load_extended}
+        1    0.000    0.000    0.002    0.002 /usr/lib/python2.7/sre_compile.py:567(compile)
+      202    0.002    0.000    0.002    0.000 {method 'split' of 'unicode' objects}
+      686    0.002    0.000    0.002    0.000 {round}
+        1    0.000    0.000    0.001    0.001 /usr/lib/python2.7/encodings/__init__.py:71(search_function)
+      686    0.001    0.000    0.001    0.000 {math.sqrt}
+      767    0.001    0.000    0.001    0.000 {method 'lower' of 'unicode' objects}
+        1    0.000    0.000    0.001    0.001 /usr/lib/python2.7/dist-packages/pygame/pkgdata.py:34(getResource)
+        1    0.001    0.001    0.001    0.001 {__import__}
+        1    0.000    0.000    0.001    0.001 /usr/lib/python2.7/sre_compile.py:552(_code)
+      738    0.001    0.000    0.001    0.000 {method 'isalnum' of 'unicode' objects}
+        1    0.000    0.000    0.001    0.001 /usr/lib/python2.7/sre_parse.py:686(parse)
+        2    0.000    0.000    0.001    0.000 /usr/lib/python2.7/dist-packages/pkg_resources.py:226(get_provider)
+      195    0.001    0.000    0.001    0.000 {method 'find' of 'unicode' objects}
+      117    0.001    0.000    0.001    0.000 {method 'match' of '_sre.SRE_Pattern' objects}
+        1    0.000    0.000    0.001    0.001 /usr/lib/python2.7/dist-packages/pkg_resources.py:941(resource_exists)
+        1    0.000    0.000    0.001    0.001 /usr/lib/python2.7/sre_parse.py:310(_parse_sub)
+        1    0.000    0.000    0.001    0.001 /usr/lib/python2.7/sre_parse.py:388(_parse)
+        2    0.000    0.000    0.001    0.000 /usr/lib/python2.7/dist-packages/pkg_resources.py:1480(__init__)
+      2/1    0.000    0.000    0.001    0.001 /usr/lib/python2.7/sre_compile.py:64(_compile)
+        1    0.001    0.001    0.001    0.001 /usr/lib/python2.7/encodings/ascii.py:8(<module>)
+        3    0.000    0.000    0.001    0.000 /usr/lib/python2.7/sre_compile.py:228(_compile_charset)
+        1    0.000    0.000    0.000    0.000 /usr/lib/python2.7/dist-packages/pkg_resources.py:957(resource_stream)
+       65    0.000    0.000    0.000    0.000 /usr/lib/python2.7/dist-packages/pygame/sysfont.py:41(_addfont)
+        2    0.000    0.000    0.000    0.000 /usr/lib/python2.7/dist-packages/pkg_resources.py:1484(_setup_prefix)
+        3    0.000    0.000    0.000    0.000 /usr/lib/python2.7/sre_compile.py:256(_optimize_charset)
+       69    0.000    0.000    0.000    0.000 {method 'join' of 'str' objects}
+        2    0.000    0.000    0.000    0.000 {method 'Section' of 'hoc.HocObject' objects}
+        3    0.000    0.000    0.000    0.000 /usr/lib/python2.7/subprocess.py:1169(pipe_cloexec)
+        1    0.000    0.000    0.000    0.000 /usr/lib/python2.7/subprocess.py:1107(_get_handles)
+        1    0.000    0.000    0.000    0.000 /usr/lib/python2.7/sre_compile.py:433(_compile_info)
+        8    0.000    0.000    0.000    0.000 /usr/lib/python2.7/dist-packages/pygame/sprite.py:345(add)
+        6    0.000    0.000    0.000    0.000 /usr/lib/python2.7/subprocess.py:1156(_set_cloexec_flag)
+       19    0.000    0.000    0.000    0.000 /usr/lib/python2.7/sre_parse.py:191(__next)
+       12    0.000    0.000    0.000    0.000 /usr/lib/python2.7/posixpath.py:89(split)
+       15    0.000    0.000    0.000    0.000 /usr/lib/python2.7/sre_parse.py:210(get)
+        1    0.000    0.000    0.000    0.000 /usr/lib/python2.7/dist-packages/pkg_resources.py:1395(has_resource)
+        2    0.000    0.000    0.000    0.000 {posix.fdopen}
+        1    0.000    0.000    0.000    0.000 /usr/lib/python2.7/dist-packages/numpy/core/numeric.py:136(ones)
+        2    0.000    0.000    0.000    0.000 /usr/lib/python2.7/subprocess.py:1444(close_unregister_and_remove)
+       12    0.000    0.000    0.000    0.000 {fcntl.fcntl}
+        1    0.000    0.000    0.000    0.000 {dir}
+       79    0.000    0.000    0.000    0.000 {method 'append' of 'list' objects}
+        2    0.000    0.000    0.000    0.000 /usr/lib/python2.7/dist-packages/pkg_resources.py:1382(__init__)
+        1    0.000    0.000    0.000    0.000 /usr/lib/python2.7/subprocess.py:1379(wait)
+        1    0.000    0.000    0.000    0.000 /usr/lib/python2.7/encodings/ascii.py:41(getregentry)
+        3    0.000    0.000    0.000    0.000 /usr/lib/python2.7/dist-packages/pygame/sprite.py:550(__init__)
+        1    0.000    0.000    0.000    0.000 /usr/lib/python2.7/pickle.py:827(Unpickler)
+        1    0.000    0.000    0.000    0.000 /usr/lib/python2.7/dist-packages/pkg_resources.py:1510(get_resource_stream)
+        4    0.000    0.000    0.000    0.000 {posix.close}
+       21    0.000    0.000    0.000    0.000 {method 'remove' of 'list' objects}
+        2    0.000    0.000    0.000    0.000 /usr/lib/python2.7/subprocess.py:1216(_close_in_parent)
+       23    0.000    0.000    0.000    0.000 nrn_net.py:59(__init__)
+        1    0.000    0.000    0.000    0.000 /usr/lib/python2.7/dist-packages/pkg_resources.py:1501(_has)
+       22    0.000    0.000    0.000    0.000 {isinstance}
+        1    0.000    0.000    0.000    0.000 /usr/lib/python2.7/genericpath.py:15(exists)
+        1    0.000    0.000    0.000    0.000 /usr/lib/python2.7/dist-packages/pygame/sysfont.py:489(create_aliases)
+      3/2    0.000    0.000    0.000    0.000 /usr/lib/python2.7/sre_parse.py:149(getwidth)
+       22    0.000    0.000    0.000    0.000 {method 'collidepoint' of 'pygame.Rect' objects}
+        1    0.000    0.000    0.000    0.000 /usr/lib/python2.7/sre_compile.py:411(_mk_bitmap)
+        2    0.000    0.000    0.000    0.000 /usr/lib/python2.7/dist-packages/pkg_resources.py:1462(_fn)
+        1    0.000    0.000    0.000    0.000 /usr/lib/python2.7/codecs.py:77(__new__)
+        3    0.000    0.000    0.000    0.000 {posix.pipe}
+        2    0.000    0.000    0.000    0.000 /usr/lib/python2.7/subprocess.py:1440(register_and_append)
+        1    0.000    0.000    0.000    0.000 {posix.stat}
+        1    0.000    0.000    0.000    0.000 {open}
+        2    0.000    0.000    0.000    0.000 /usr/lib/python2.7/posixpath.py:127(dirname)
+        1    0.000    0.000    0.000    0.000 /usr/lib/python2.7/pickle.py:171(Pickler)
+        1    0.000    0.000    0.000    0.000 /usr/lib/python2.7/encodings/__init__.py:49(normalize_encoding)
+        6    0.000    0.000    0.000    0.000 /usr/lib/python2.7/sre_parse.py:139(__getitem__)
+        8    0.000    0.000    0.000    0.000 /usr/lib/python2.7/sre_parse.py:204(match)
+        2    0.000    0.000    0.000    0.000 {method 'close' of 'file' objects}
+        1    0.000    0.000    0.000    0.000 {posix.waitpid}
+        1    0.000    0.000    0.000    0.000 {numpy.core.multiarray.copyto}
+        9    0.000    0.000    0.000    0.000 {getattr}
+        2    0.000    0.000    0.000    0.000 /usr/lib/python2.7/dist-packages/pkg_resources.py:2818(_find_adapter)
+        2    0.000    0.000    0.000    0.000 {method 'insert' of 'nrn.Section' objects}
+        1    0.000    0.000    0.000    0.000 {numpy.core.multiarray.empty}
+        2    0.000    0.000    0.000    0.000 /usr/lib/python2.7/posixpath.py:68(join)
+        1    0.000    0.000    0.000    0.000 /usr/lib/python2.7/subprocess.py:647(Popen)
+        1    0.000    0.000    0.000    0.000 /usr/lib/python2.7/sre_parse.py:187(__init__)
+       23    0.000    0.000    0.000    0.000 {method 'lower' of 'str' objects}
+       11    0.000    0.000    0.000    0.000 {method 'find' of 'bytearray' objects}
+        1    0.000    0.000    0.000    0.000 /usr/lib/python2.7/subprocess.py:1338(_handle_exitstatus)
+       14    0.000    0.000    0.000    0.000 {method 'rfind' of 'str' objects}
+        5    0.000    0.000    0.000    0.000 /usr/lib/python2.7/dist-packages/pygame/sprite.py:121(__init__)
+       14    0.000    0.000    0.000    0.000 {method 'endswith' of 'str' objects}
+        2    0.000    0.000    0.000    0.000 {method 'set_colorkey' of 'pygame.Surface' objects}
+        1    0.000    0.000    0.000    0.000 /usr/lib/python2.7/sre_compile.py:428(_simple)
+       10    0.000    0.000    0.000    0.000 {method 'rstrip' of 'str' objects}
+        1    0.000    0.000    0.000    0.000 /usr/lib/python2.7/subprocess.py:754(__del__)
+        5    0.000    0.000    0.000    0.000 /usr/lib/python2.7/dist-packages/pygame/sprite.py:316(add_internal)
+        9    0.000    0.000    0.000    0.000 {method 'keys' of 'dict' objects}
+        5    0.000    0.000    0.000    0.000 /usr/lib/python2.7/dist-packages/pygame/sprite.py:325(has_internal)
+        3    0.000    0.000    0.000    0.000 /usr/lib/python2.7/dist-packages/pygame/sprite.py:299(__init__)
+        4    0.000    0.000    0.000    0.000 {method 'split' of 'str' objects}
+        2    0.000    0.000    0.000    0.000 /usr/lib/python2.7/sre_compile.py:546(isstring)
+        1    0.000    0.000    0.000    0.000 {gc.enable}
+        4    0.000    0.000    0.000    0.000 /usr/lib/python2.7/sre_parse.py:135(__len__)
+        4    0.000    0.000    0.000    0.000 {min}
+        3    0.000    0.000    0.000    0.000 /usr/lib/python2.7/sre_parse.py:147(append)
+        1    0.000    0.000    0.000    0.000 {method 'update' of 'dict' objects}
+        2    0.000    0.000    0.000    0.000 {hasattr}
+        5    0.000    0.000    0.000    0.000 {method 'get_rect' of 'pygame.Surface' objects}
+        5    0.000    0.000    0.000    0.000 /usr/lib/python2.7/dist-packages/pygame/sprite.py:162(add_internal)
+        2    0.000    0.000    0.000    0.000 {built-in method register}
+        2    0.000    0.000    0.000    0.000 /usr/lib/python2.7/dist-packages/pkg_resources.py:2811(_get_mro)
+       11    0.000    0.000    0.000    0.000 {method 'isalnum' of 'str' objects}
+        6    0.000    0.000    0.000    0.000 {method 'fileno' of 'file' objects}
+        1    0.000    0.000    0.000    0.000 {_sre.compile}
+        2    0.000    0.000    0.000    0.000 {method 'extend' of 'list' objects}
+        5    0.000    0.000    0.000    0.000 {method 'get' of 'dict' objects}
+        2    0.000    0.000    0.000    0.000 {method 'update' of 'set' objects}
+        1    0.000    0.000    0.000    0.000 {posix.sysconf}
+        7    0.000    0.000    0.000    0.000 {ord}
+        2    0.000    0.000    0.000    0.000 {method 'translate' of 'str' objects}
+        2    0.000    0.000    0.000    0.000 {method 'remove' of 'set' objects}
+        1    0.000    0.000    0.000    0.000 {built-in method __new__ of type object at 0x2d4c48}
+        1    0.000    0.000    0.000    0.000 /usr/lib/python2.7/subprocess.py:458(_cleanup)
+        1    0.000    0.000    0.000    0.000 /usr/lib/python2.7/encodings/ascii.py:13(Codec)
+        1    0.000    0.000    0.000    0.000 {method 'count' of 'list' objects}
+        2    0.000    0.000    0.000    0.000 /usr/lib/python2.7/sre_parse.py:90(__init__)
+        1    0.000    0.000    0.000    0.000 /usr/lib/python2.7/subprocess.py:400(CalledProcessError)
+        2    0.000    0.000    0.000    0.000 {method 'pop' of 'dict' objects}
+        2    0.000    0.000    0.000    0.000 {method 'startswith' of 'str' objects}
+        2    0.000    0.000    0.000    0.000 {built-in method unregister}
+        1    0.000    0.000    0.000    0.000 <string>:1(<module>)
+        1    0.000    0.000    0.000    0.000 {method 'replace' of 'str' objects}
+        1    0.000    0.000    0.000    0.000 /usr/lib/python2.7/sre_parse.py:67(__init__)
+        1    0.000    0.000    0.000    0.000 /usr/lib/python2.7/encodings/ascii.py:20(IncrementalEncoder)
+        1    0.000    0.000    0.000    0.000 /usr/lib/python2.7/pickle.py:82(_Stop)
+        1    0.000    0.000    0.000    0.000 /usr/lib/python2.7/encodings/ascii.py:24(IncrementalDecoder)
+        1    0.000    0.000    0.000    0.000 /usr/lib/python2.7/pickle.py:58(PickleError)
+        1    0.000    0.000    0.000    0.000 /usr/lib/python2.7/encodings/ascii.py:34(StreamConverter)
+        1    0.000    0.000    0.000    0.000 /usr/lib/python2.7/subprocess.py:1352(_internal_poll)
+        1    0.000    0.000    0.000    0.000 /usr/lib/python2.7/sre_parse.py:143(__setitem__)
+        1    0.000    0.000    0.000    0.000 /usr/lib/python2.7/pickle.py:62(PicklingError)
+        1    0.000    0.000    0.000    0.000 {select.poll}
+        1    0.000    0.000    0.000    0.000 {posix.WEXITSTATUS}
+        1    0.000    0.000    0.000    0.000 /usr/lib/python2.7/encodings/ascii.py:28(StreamWriter)
+        1    0.000    0.000    0.000    0.000 /usr/lib/python2.7/pickle.py:1261(_EmptyClass)
+        1    0.000    0.000    0.000    0.000 /usr/lib/python2.7/pickle.py:69(UnpicklingError)
+        1    0.000    0.000    0.000    0.000 /usr/lib/python2.7/encodings/ascii.py:31(StreamReader)
+        1    0.000    0.000    0.000    0.000 {posix.WIFSIGNALED}
+        1    0.000    0.000    0.000    0.000 {method 'items' of 'dict' objects}
+        1    0.000    0.000    0.000    0.000 {method 'disable' of '_lsprof.Profiler' objects}
+        1    0.000    0.000    0.000    0.000 {gc.isenabled}
+        1    0.000    0.000    0.000    0.000 {posix.WIFEXITED}
+        1    0.000    0.000    0.000    0.000 {gc.disable}
+
+
+
