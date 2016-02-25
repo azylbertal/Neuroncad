@@ -171,7 +171,7 @@ def build_loop():
         #    ax.draw(screen)
             
         if len(pts)>1:
-            pygame.draw.aalines(screen, BLACK, False, pts, 5)
+            pygame.draw.lines(screen, BLACK, False, pts, 5)
         #for i in range(len(xx)-1):
         #    pygame.draw.line(screen, (200, 200, 200), (xx[i], yy[i]), (xx[i+1], yy[i+1]))
             
@@ -179,7 +179,7 @@ def build_loop():
     
         pygame.display.flip()
         
-
+@profile
 def run_loop(all_neurons):
     
     vmin=-70.
@@ -187,7 +187,7 @@ def run_loop(all_neurons):
     plot_len=300    
     fire_image_delay=100
     running=1
-    
+    plot_count=0
     buttons = pygame.sprite.Group()
     downflag=False;
     stop_button=pygame.sprite.Sprite()
@@ -235,10 +235,10 @@ def run_loop(all_neurons):
 
         for counter, neur in enumerate(all_neurons.sprites()):
             
-            if len(np.array(recv[counter])>0):            
+            try:       
                 max_v=np.max(np.array(recv[counter]))
-            else:
-                max_v=0
+            except:
+            	max_v=0.
             if max_v>25.0 and neur.fire_counter==0:
                 neur.fire_counter=fire_image_delay
                 neur.image=firing_neuron_image
@@ -307,17 +307,19 @@ def run_loop(all_neurons):
         t+=step         
         
         v=np.append(v[1::], [all_neurons.sprites()[0].mod(0.5).v])
-        vmax=np.max(v)
-        vmin=np.min(v)-1
-        #plist=[]
-#        for i in range(plot_len):
-#            plist+=[[i, 50-49*(v[i]-vmin)/(vmax-vmin)]]
-        v_scaled=50-49*(v-vmin)/(vmax-vmin)
-        plist=np.stack((np.array(range(plot_len)), v_scaled))
+        plot_count+=1
+	if plot_count==10:
+		plot_count=0
+		vmax=np.max(v)
+        	vmin=np.min(v)-1
         
-        plt.fill(bgcolor)
-        pygame.draw.lines(plt, BLUE, False, np.transpose(plist))
-        dirty_recs.append(screen.blit(plt, (100, 100)))
+        	v_scaled=50-49*(v-vmin)/(vmax-vmin)
+        
+		plist=np.vstack((np.array(range(plot_len)), v_scaled))
+        
+        	plt.fill(bgcolor)
+        	pygame.draw.lines(plt, BLUE, False, np.transpose(plist))
+        	dirty_recs.append(screen.blit(plt, (100, 100)))
         
         pygame.display.update(dirty_recs)
         dirty_recs=[]

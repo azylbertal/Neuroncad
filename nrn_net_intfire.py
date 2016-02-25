@@ -184,7 +184,7 @@ def build_loop():
     
         pygame.display.flip()
         
-
+@profile
 def run_loop(all_neurons):
     
     vmin=-70.
@@ -329,7 +329,7 @@ def run_loop(all_neurons):
         
         pygame.display.update(dirty_recs)
         dirty_recs=[]
-        sleep(0.001)
+        
         
 
 
@@ -355,6 +355,6 @@ pr.disable()
 s = StringIO.StringIO()
 sortby = 'cumulative'
 ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
-#ps.print_stats()
-#print s.getvalue()
+ps.print_stats()
+print s.getvalue()
 pygame.quit()
