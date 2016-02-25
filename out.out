@@ -1,0 +1,224 @@
+NEURON -- Release 7.4 (1351:8f462ea7e030) 2015-07-21
+Duke, Yale, and the BlueBrain Project -- Copyright 1984-2015
+See http://www.neuron.yale.edu/neuron/credits
+
+         4177121 function calls (4177118 primitive calls) in 36.455 seconds
+
+   Ordered by: cumulative time
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+        1    0.151    0.151   36.455   36.455 nrn_net.py:84(build_loop)
+        1    4.150    4.150   29.790   29.790 nrn_net.py:183(run_loop)
+    49491   15.292    0.000   15.292    0.000 {pygame.display.update}
+    61015    0.217    0.000    3.426    0.000 /usr/local/lib/python2.7/dist-packages/pygame/sprite.py:401(draw)
+     5762    3.330    0.001    3.330    0.001 {pygame.display.flip}
+   124513    3.125    0.000    3.125    0.000 {method 'blit' of 'pygame.Surface' objects}
+   630433    1.767    0.000    3.120    0.000 nrn_net.py:64(draw_and_advance)
+   296948    1.715    0.000    1.715    0.000 {numpy.core.multiarray.array}
+  1260866    1.352    0.000    1.352    0.000 {pygame.draw.circle}
+   148473    0.204    0.000    1.079    0.000 /home/asaph/anaconda2/lib/python2.7/site-packages/numpy/core/fromnumeric.py:2175(amax)
+     5762    1.024    0.000    1.024    0.000 {method 'fill' of 'pygame.Surface' objects}
+   197964    0.972    0.000    0.972    0.000 {method 'reduce' of 'numpy.ufunc' objects}
+     8247    0.006    0.000    0.947    0.000 nrn_net.py:33(drawAxons)
+      454    0.002    0.000    0.940    0.002 nrn_net.py:56(draw)
+      454    0.939    0.002    0.939    0.002 {pygame.draw.lines}
+   148473    0.073    0.000    0.876    0.000 /home/asaph/anaconda2/lib/python2.7/site-packages/numpy/core/_methods.py:25(_amax)
+    49491    0.137    0.000    0.779    0.000 /home/asaph/anaconda2/lib/python2.7/site-packages/numpy/lib/function_base.py:4098(append)
+     2344    0.582    0.000    0.582    0.000 {pygame.draw.aalines}
+   215334    0.346    0.000    0.402    0.000 /usr/local/lib/python2.7/dist-packages/pygame/sprite.py:271(sprites)
+    49491    0.075    0.000    0.385    0.000 /home/asaph/anaconda2/lib/python2.7/site-packages/numpy/core/fromnumeric.py:1377(ravel)
+    98982    0.083    0.000    0.289    0.000 /home/asaph/anaconda2/lib/python2.7/site-packages/numpy/core/numeric.py:476(asanyarray)
+    55254    0.240    0.000    0.240    0.000 {pygame.event.poll}
+    49491    0.045    0.000    0.236    0.000 /home/asaph/anaconda2/lib/python2.7/site-packages/numpy/core/fromnumeric.py:2266(amin)
+    49491    0.022    0.000    0.191    0.000 /home/asaph/anaconda2/lib/python2.7/site-packages/numpy/core/_methods.py:28(_amin)
+    49491    0.189    0.000    0.189    0.000 {numpy.core.multiarray.concatenate}
+     5761    0.018    0.000    0.120    0.000 /home/asaph/src/pygame_net/eztext.py:47(draw)
+     5761    0.069    0.000    0.069    0.000 {method 'render' of 'pygame.font.Font' objects}
+   215343    0.056    0.000    0.056    0.000 {method 'keys' of 'dict' objects}
+    49513    0.054    0.000    0.054    0.000 {isinstance}
+     5761    0.030    0.000    0.050    0.000 /home/asaph/src/pygame_net/eztext.py:52(update)
+    55254    0.045    0.000    0.045    0.000 {pygame.mouse.get_pos}
+    49491    0.036    0.000    0.036    0.000 {method 'ravel' of 'numpy.ndarray' objects}
+110591/110590    0.033    0.000    0.033    0.000 {len}
+    99571    0.022    0.000    0.022    0.000 {method 'append' of 'list' objects}
+     5761    0.017    0.000    0.017    0.000 {pygame.key.get_pressed}
+        1    0.000    0.000    0.014    0.014 /home/asaph/src/pygame_net/eztext.py:22(__init__)
+        1    0.000    0.000    0.014    0.014 /home/asaph/src/pygame_net/eztext.py:9(__init__)
+        1    0.000    0.000    0.014    0.014 <string>:1(<module>)
+        1    0.000    0.000    0.014    0.014 /usr/local/lib/python2.7/dist-packages/pygame/sysfont.py:534(SysFont)
+        1    0.000    0.000    0.013    0.013 /usr/local/lib/python2.7/dist-packages/pygame/sysfont.py:518(initsysfonts)
+        1    0.001    0.001    0.013    0.013 /usr/local/lib/python2.7/dist-packages/pygame/sysfont.py:445(initsysfonts_unix)
+        1    0.002    0.002    0.012    0.012 nrn_net.py:41(__init__)
+        1    0.012    0.012    0.012    0.012 /usr/local/lib/python2.7/dist-packages/neuron/__init__.py:332(run)
+     2344    0.009    0.000    0.010    0.000 nrn_net.py:74(inter)
+        1    0.000    0.000    0.007    0.007 /home/asaph/anaconda2/lib/python2.7/subprocess.py:768(communicate)
+        1    0.000    0.000    0.007    0.007 /home/asaph/anaconda2/lib/python2.7/subprocess.py:1400(_communicate)
+        1    0.000    0.000    0.006    0.006 /home/asaph/anaconda2/lib/python2.7/subprocess.py:1433(_communicate_with_poll)
+        8    0.006    0.001    0.006    0.001 {built-in method poll}
+        1    0.000    0.000    0.002    0.002 /home/asaph/anaconda2/lib/python2.7/subprocess.py:650(__init__)
+        1    0.000    0.000    0.002    0.002 /home/asaph/anaconda2/lib/python2.7/subprocess.py:1195(_execute_child)
+        1    0.001    0.001    0.001    0.001 /home/asaph/anaconda2/lib/python2.7/subprocess.py:387(<module>)
+      175    0.001    0.000    0.001    0.000 /usr/local/lib/python2.7/dist-packages/pygame/sysfont.py:36(_simplename)
+        8    0.001    0.000    0.001    0.000 {posix.read}
+        2    0.000    0.000    0.001    0.001 /home/asaph/anaconda2/lib/python2.7/subprocess.py:473(_eintr_retry_call)
+        1    0.000    0.000    0.001    0.001 /usr/local/lib/python2.7/dist-packages/pygame/sysfont.py:32(toascii)
+        1    0.001    0.001    0.001    0.001 {method 'decode' of 'str' objects}
+        1    0.000    0.000    0.001    0.001 /home/asaph/anaconda2/lib/python2.7/pickle.py:25(<module>)
+        1    0.001    0.001    0.001    0.001 {posix.fork}
+     2350    0.001    0.000    0.001    0.000 {range}
+        2    0.000    0.000    0.001    0.000 nrn_net.py:20(__init__)
+        7    0.000    0.000    0.000    0.000 {method 'convert' of 'pygame.Surface' objects}
+      117    0.000    0.000    0.000    0.000 /home/asaph/anaconda2/lib/python2.7/re.py:138(match)
+      454    0.000    0.000    0.000    0.000 {method 'split' of 'unicode' objects}
+     2344    0.000    0.000    0.000    0.000 {round}
+        7    0.000    0.000    0.000    0.000 {pygame.imageext.load_extended}
+     2344    0.000    0.000    0.000    0.000 {math.sqrt}
+      117    0.000    0.000    0.000    0.000 /home/asaph/anaconda2/lib/python2.7/re.py:230(_compile)
+        1    0.000    0.000    0.000    0.000 /home/asaph/anaconda2/lib/python2.7/encodings/__init__.py:71(search_function)
+        1    0.000    0.000    0.000    0.000 /home/asaph/anaconda2/lib/python2.7/sre_compile.py:567(compile)
+        1    0.000    0.000    0.000    0.000 {__import__}
+        1    0.000    0.000    0.000    0.000 /usr/local/lib/python2.7/dist-packages/pygame/pkgdata.py:34(getResource)
+      522    0.000    0.000    0.000    0.000 {method 'find' of 'unicode' objects}
+     1992    0.000    0.000    0.000    0.000 {method 'lower' of 'unicode' objects}
+     1976    0.000    0.000    0.000    0.000 {method 'isalnum' of 'unicode' objects}
+      246    0.000    0.000    0.000    0.000 {method 'collidepoint' of 'pygame.Rect' objects}
+        1    0.000    0.000    0.000    0.000 /home/asaph/anaconda2/lib/python2.7/site-packages/setuptools-19.6.2-py2.7.egg/pkg_resources/__init__.py:1137(resource_exists)
+      174    0.000    0.000    0.000    0.000 /usr/local/lib/python2.7/dist-packages/pygame/sysfont.py:41(_addfont)
+        2    0.000    0.000    0.000    0.000 /home/asaph/anaconda2/lib/python2.7/site-packages/setuptools-19.6.2-py2.7.egg/pkg_resources/__init__.py:417(get_provider)
+        1    0.000    0.000    0.000    0.000 /home/asaph/anaconda2/lib/python2.7/sre_compile.py:552(_code)
+      178    0.000    0.000    0.000    0.000 {method 'join' of 'str' objects}
+        1    0.000    0.000    0.000    0.000 /home/asaph/anaconda2/lib/python2.7/sre_parse.py:706(parse)
+        1    0.000    0.000    0.000    0.000 /home/asaph/anaconda2/lib/python2.7/encodings/ascii.py:8(<module>)
+        2    0.000    0.000    0.000    0.000 /home/asaph/anaconda2/lib/python2.7/site-packages/setuptools-19.6.2-py2.7.egg/pkg_resources/__init__.py:1691(__init__)
+        1    0.000    0.000    0.000    0.000 /home/asaph/anaconda2/lib/python2.7/sre_parse.py:317(_parse_sub)
+        1    0.000    0.000    0.000    0.000 /home/asaph/anaconda2/lib/python2.7/sre_parse.py:395(_parse)
+        2    0.000    0.000    0.000    0.000 {method 'Section' of 'hoc.HocObject' objects}
+      2/1    0.000    0.000    0.000    0.000 /home/asaph/anaconda2/lib/python2.7/sre_compile.py:64(_compile)
+        3    0.000    0.000    0.000    0.000 /home/asaph/anaconda2/lib/python2.7/sre_compile.py:228(_compile_charset)
+        1    0.000    0.000    0.000    0.000 /home/asaph/anaconda2/lib/python2.7/site-packages/setuptools-19.6.2-py2.7.egg/pkg_resources/__init__.py:1153(resource_stream)
+        2    0.000    0.000    0.000    0.000 /home/asaph/anaconda2/lib/python2.7/site-packages/setuptools-19.6.2-py2.7.egg/pkg_resources/__init__.py:1695(_setup_prefix)
+        3    0.000    0.000    0.000    0.000 /home/asaph/anaconda2/lib/python2.7/sre_compile.py:256(_optimize_charset)
+       75    0.000    0.000    0.000    0.000 {method 'remove' of 'list' objects}
+      117    0.000    0.000    0.000    0.000 {method 'match' of '_sre.SRE_Pattern' objects}
+       77    0.000    0.000    0.000    0.000 nrn_net.py:61(__init__)
+        1    0.000    0.000    0.000    0.000 /home/asaph/anaconda2/lib/python2.7/site-packages/setuptools-19.6.2-py2.7.egg/pkg_resources/__init__.py:1604(has_resource)
+        8    0.000    0.000    0.000    0.000 /usr/local/lib/python2.7/dist-packages/pygame/sprite.py:307(add)
+        3    0.000    0.000    0.000    0.000 /home/asaph/anaconda2/lib/python2.7/subprocess.py:1169(pipe_cloexec)
+        1    0.000    0.000    0.000    0.000 /home/asaph/anaconda2/lib/python2.7/sre_compile.py:433(_compile_info)
+        1    0.000    0.000    0.000    0.000 /home/asaph/anaconda2/lib/python2.7/subprocess.py:1107(_get_handles)
+        1    0.000    0.000    0.000    0.000 /home/asaph/anaconda2/lib/python2.7/site-packages/numpy/core/numeric.py:141(ones)
+        1    0.000    0.000    0.000    0.000 /home/asaph/anaconda2/lib/python2.7/site-packages/setuptools-19.6.2-py2.7.egg/pkg_resources/__init__.py:1712(_has)
+        1    0.000    0.000    0.000    0.000 /home/asaph/anaconda2/lib/python2.7/genericpath.py:23(exists)
+        1    0.000    0.000    0.000    0.000 /home/asaph/anaconda2/lib/python2.7/subprocess.py:1379(wait)
+        1    0.000    0.000    0.000    0.000 {posix.stat}
+        6    0.000    0.000    0.000    0.000 /home/asaph/anaconda2/lib/python2.7/subprocess.py:1156(_set_cloexec_flag)
+       14    0.000    0.000    0.000    0.000 /home/asaph/anaconda2/lib/python2.7/posixpath.py:82(split)
+        2    0.000    0.000    0.000    0.000 /home/asaph/anaconda2/lib/python2.7/subprocess.py:1444(close_unregister_and_remove)
+        3    0.000    0.000    0.000    0.000 /usr/local/lib/python2.7/dist-packages/pygame/sprite.py:477(__init__)
+        2    0.000    0.000    0.000    0.000 /home/asaph/anaconda2/lib/python2.7/site-packages/setuptools-19.6.2-py2.7.egg/pkg_resources/__init__.py:1591(__init__)
+        1    0.000    0.000    0.000    0.000 {dir}
+       15    0.000    0.000    0.000    0.000 /home/asaph/anaconda2/lib/python2.7/sre_parse.py:212(get)
+       19    0.000    0.000    0.000    0.000 /home/asaph/anaconda2/lib/python2.7/sre_parse.py:193(__next)
+        2    0.000    0.000    0.000    0.000 {posix.fdopen}
+        2    0.000    0.000    0.000    0.000 /home/asaph/anaconda2/lib/python2.7/subprocess.py:1216(_close_in_parent)
+        1    0.000    0.000    0.000    0.000 /home/asaph/anaconda2/lib/python2.7/site-packages/setuptools-19.6.2-py2.7.egg/pkg_resources/__init__.py:1721(get_resource_stream)
+        1    0.000    0.000    0.000    0.000 /home/asaph/anaconda2/lib/python2.7/encodings/ascii.py:41(getregentry)
+       12    0.000    0.000    0.000    0.000 {fcntl.fcntl}
+       14    0.000    0.000    0.000    0.000 /home/asaph/anaconda2/lib/python2.7/site-packages/setuptools-19.6.2-py2.7.egg/pkg_resources/__init__.py:2287(_is_unpacked_egg)
+        1    0.000    0.000    0.000    0.000 /usr/local/lib/python2.7/dist-packages/pygame/sysfont.py:487(create_aliases)
+        4    0.000    0.000    0.000    0.000 {posix.close}
+        1    0.000    0.000    0.000    0.000 {numpy.core.multiarray.copyto}
+        1    0.000    0.000    0.000    0.000 /home/asaph/anaconda2/lib/python2.7/pickle.py:833(Unpickler)
+      3/2    0.000    0.000    0.000    0.000 /home/asaph/anaconda2/lib/python2.7/sre_parse.py:151(getwidth)
+        7    0.000    0.000    0.000    0.000 /home/asaph/anaconda2/lib/python2.7/site-packages/setuptools-19.6.2-py2.7.egg/pkg_resources/extern/__init__.py:22(find_module)
+        1    0.000    0.000    0.000    0.000 {numpy.core.multiarray.empty}
+        1    0.000    0.000    0.000    0.000 /home/asaph/anaconda2/lib/python2.7/encodings/__init__.py:49(normalize_encoding)
+        2    0.000    0.000    0.000    0.000 /home/asaph/anaconda2/lib/python2.7/site-packages/setuptools-19.6.2-py2.7.egg/pkg_resources/__init__.py:1673(_fn)
+        1    0.000    0.000    0.000    0.000 {open}
+        1    0.000    0.000    0.000    0.000 {posix.waitpid}
+        4    0.000    0.000    0.000    0.000 {method 'set_colorkey' of 'pygame.Surface' objects}
+        1    0.000    0.000    0.000    0.000 /home/asaph/anaconda2/lib/python2.7/sre_compile.py:411(_mk_bitmap)
+        2    0.000    0.000    0.000    0.000 /home/asaph/anaconda2/lib/python2.7/subprocess.py:1440(register_and_append)
+        2    0.000    0.000    0.000    0.000 /home/asaph/anaconda2/lib/python2.7/posixpath.py:120(dirname)
+        2    0.000    0.000    0.000    0.000 {method 'insert' of 'nrn.Section' objects}
+        3    0.000    0.000    0.000    0.000 {posix.pipe}
+        1    0.000    0.000    0.000    0.000 /home/asaph/anaconda2/lib/python2.7/codecs.py:92(__new__)
+        6    0.000    0.000    0.000    0.000 /home/asaph/anaconda2/lib/python2.7/sre_parse.py:141(__getitem__)
+        2    0.000    0.000    0.000    0.000 {method 'close' of 'file' objects}
+        1    0.000    0.000    0.000    0.000 /home/asaph/anaconda2/lib/python2.7/pickle.py:171(Pickler)
+        2    0.000    0.000    0.000    0.000 /home/asaph/anaconda2/lib/python2.7/posixpath.py:61(join)
+        2    0.000    0.000    0.000    0.000 /home/asaph/anaconda2/lib/python2.7/site-packages/setuptools-19.6.2-py2.7.egg/pkg_resources/__init__.py:3057(_find_adapter)
+        1    0.000    0.000    0.000    0.000 /home/asaph/anaconda2/lib/python2.7/subprocess.py:647(Popen)
+        5    0.000    0.000    0.000    0.000 /usr/local/lib/python2.7/dist-packages/pygame/sprite.py:112(__init__)
+        9    0.000    0.000    0.000    0.000 {getattr}
+        7    0.000    0.000    0.000    0.000 /home/asaph/anaconda2/lib/python2.7/site-packages/setuptools-19.6.2-py2.7.egg/pkg_resources/_vendor/six.py:184(find_module)
+        8    0.000    0.000    0.000    0.000 /home/asaph/anaconda2/lib/python2.7/sre_parse.py:206(match)
+        1    0.000    0.000    0.000    0.000 /home/asaph/anaconda2/lib/python2.7/subprocess.py:1338(_handle_exitstatus)
+       11    0.000    0.000    0.000    0.000 {method 'find' of 'bytearray' objects}
+        1    0.000    0.000    0.000    0.000 {method 'update' of 'dict' objects}
+       12    0.000    0.000    0.000    0.000 {method 'rstrip' of 'str' objects}
+        3    0.000    0.000    0.000    0.000 /usr/local/lib/python2.7/dist-packages/pygame/sprite.py:267(__init__)
+        1    0.000    0.000    0.000    0.000 /home/asaph/anaconda2/lib/python2.7/sre_compile.py:428(_simple)
+        2    0.000    0.000    0.000    0.000 {built-in method register}
+        1    0.000    0.000    0.000    0.000 /home/asaph/anaconda2/lib/python2.7/sre_parse.py:189(__init__)
+        1    0.000    0.000    0.000    0.000 /home/asaph/anaconda2/lib/python2.7/subprocess.py:754(__del__)
+       25    0.000    0.000    0.000    0.000 {method 'lower' of 'str' objects}
+       16    0.000    0.000    0.000    0.000 {method 'endswith' of 'str' objects}
+        5    0.000    0.000    0.000    0.000 /usr/local/lib/python2.7/dist-packages/pygame/sprite.py:290(has_internal)
+        5    0.000    0.000    0.000    0.000 /usr/local/lib/python2.7/dist-packages/pygame/sprite.py:281(add_internal)
+        7    0.000    0.000    0.000    0.000 {method 'partition' of 'str' objects}
+        2    0.000    0.000    0.000    0.000 {method 'remove' of 'set' objects}
+        4    0.000    0.000    0.000    0.000 {method 'split' of 'str' objects}
+        3    0.000    0.000    0.000    0.000 /home/asaph/anaconda2/lib/python2.7/sre_parse.py:149(append)
+        4    0.000    0.000    0.000    0.000 /home/asaph/anaconda2/lib/python2.7/sre_parse.py:137(__len__)
+        5    0.000    0.000    0.000    0.000 /usr/local/lib/python2.7/dist-packages/pygame/sprite.py:146(add_internal)
+        2    0.000    0.000    0.000    0.000 {hasattr}
+        5    0.000    0.000    0.000    0.000 {method 'get_rect' of 'pygame.Surface' objects}
+       16    0.000    0.000    0.000    0.000 {method 'rfind' of 'str' objects}
+        1    0.000    0.000    0.000    0.000 {posix.sysconf}
+        7    0.000    0.000    0.000    0.000 {ord}
+        1    0.000    0.000    0.000    0.000 {_sre.compile}
+        5    0.000    0.000    0.000    0.000 {method 'get' of 'dict' objects}
+        2    0.000    0.000    0.000    0.000 {method 'update' of 'set' objects}
+        4    0.000    0.000    0.000    0.000 {min}
+        1    0.000    0.000    0.000    0.000 {select.poll}
+        1    0.000    0.000    0.000    0.000 {method 'replace' of 'str' objects}
+        2    0.000    0.000    0.000    0.000 /home/asaph/anaconda2/lib/python2.7/site-packages/setuptools-19.6.2-py2.7.egg/pkg_resources/__init__.py:3050(_get_mro)
+        2    0.000    0.000    0.000    0.000 /home/asaph/anaconda2/lib/python2.7/sre_compile.py:546(isstring)
+        1    0.000    0.000    0.000    0.000 /home/asaph/anaconda2/lib/python2.7/subprocess.py:458(_cleanup)
+        1    0.000    0.000    0.000    0.000 /home/asaph/anaconda2/lib/python2.7/encodings/ascii.py:24(IncrementalDecoder)
+        2    0.000    0.000    0.000    0.000 {method 'extend' of 'list' objects}
+       11    0.000    0.000    0.000    0.000 {method 'isalnum' of 'str' objects}
+        1    0.000    0.000    0.000    0.000 /home/asaph/anaconda2/lib/python2.7/encodings/ascii.py:13(Codec)
+        1    0.000    0.000    0.000    0.000 /home/asaph/anaconda2/lib/python2.7/pickle.py:1267(_EmptyClass)
+        1    0.000    0.000    0.000    0.000 {posix.WIFSIGNALED}
+        1    0.000    0.000    0.000    0.000 {built-in method __new__ of type object at 0x7f3d9aab9f20}
+        1    0.000    0.000    0.000    0.000 {method 'items' of 'dict' objects}
+        1    0.000    0.000    0.000    0.000 /home/asaph/anaconda2/lib/python2.7/subprocess.py:400(CalledProcessError)
+        1    0.000    0.000    0.000    0.000 /home/asaph/anaconda2/lib/python2.7/pickle.py:62(PicklingError)
+        1    0.000    0.000    0.000    0.000 {method 'count' of 'list' objects}
+        2    0.000    0.000    0.000    0.000 {method 'pop' of 'dict' objects}
+        1    0.000    0.000    0.000    0.000 /home/asaph/anaconda2/lib/python2.7/encodings/ascii.py:20(IncrementalEncoder)
+        1    0.000    0.000    0.000    0.000 /home/asaph/anaconda2/lib/python2.7/pickle.py:58(PickleError)
+        1    0.000    0.000    0.000    0.000 {posix.WEXITSTATUS}
+        2    0.000    0.000    0.000    0.000 {method 'startswith' of 'str' objects}
+        1    0.000    0.000    0.000    0.000 {gc.isenabled}
+        1    0.000    0.000    0.000    0.000 {gc.enable}
+        2    0.000    0.000    0.000    0.000 {method 'translate' of 'str' objects}
+        1    0.000    0.000    0.000    0.000 /home/asaph/anaconda2/lib/python2.7/encodings/ascii.py:34(StreamConverter)
+        2    0.000    0.000    0.000    0.000 {built-in method unregister}
+        1    0.000    0.000    0.000    0.000 /home/asaph/anaconda2/lib/python2.7/pickle.py:69(UnpicklingError)
+        1    0.000    0.000    0.000    0.000 /home/asaph/anaconda2/lib/python2.7/sre_parse.py:67(__init__)
+        6    0.000    0.000    0.000    0.000 {method 'fileno' of 'file' objects}
+        1    0.000    0.000    0.000    0.000 /home/asaph/anaconda2/lib/python2.7/encodings/ascii.py:31(StreamReader)
+        1    0.000    0.000    0.000    0.000 /home/asaph/anaconda2/lib/python2.7/encodings/ascii.py:28(StreamWriter)
+        1    0.000    0.000    0.000    0.000 /home/asaph/anaconda2/lib/python2.7/pickle.py:82(_Stop)
+        1    0.000    0.000    0.000    0.000 /home/asaph/anaconda2/lib/python2.7/sre_parse.py:145(__setitem__)
+        1    0.000    0.000    0.000    0.000 /home/asaph/anaconda2/lib/python2.7/subprocess.py:1352(_internal_poll)
+        2    0.000    0.000    0.000    0.000 /home/asaph/anaconda2/lib/python2.7/sre_parse.py:92(__init__)
+        1    0.000    0.000    0.000    0.000 {gc.disable}
+        1    0.000    0.000    0.000    0.000 {posix.WIFEXITED}
+        1    0.000    0.000    0.000    0.000 {method 'disable' of '_lsprof.Profiler' objects}
+
+
+

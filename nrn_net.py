@@ -4,7 +4,7 @@ import neuron
 #import matplotlib.pyplot as plt
 import numpy as np
 import cProfile, pstats, StringIO
-from time import sleep
+#from time import sleep
 import eztext
 
 BLACK = (  0,   0,   0)
@@ -54,7 +54,7 @@ class Axon():
                 
     
     def draw(self, screen):
-        return pygame.draw.lines(screen, BLUE, False, self.points, 1)
+        return pygame.draw.lines(screen, BLUE, False, self.points, 8)
 
 
 class AP():
@@ -62,9 +62,11 @@ class AP():
         self.axon=axon
         self.pos=0
     def draw_and_advance(self):
-        oldc=pygame.draw.circle(screen, bgcolor, [int(p) for p in self.axon.points[self.pos]], 10)
+        #oldc1=pygame.draw.circle(screen, bgcolor, [int(p) for p in self.axon.points[self.pos]], 5)        
+        oldc=pygame.draw.circle(screen, BLUE, [int(p) for p in self.axon.points[self.pos]], 3)
+        #old_line=pygame.draw.line(screen, BLUE, [int(p) for p in self.axon.points[self.pos]], [int(pp) for pp in self.axon.points[self.pos+1]], 6)
         self.pos+=1
-        newc=pygame.draw.circle(screen, BLUE, [int(p) for p in self.axon.points[self.pos]], 10)
+        newc=pygame.draw.circle(screen, WHITE, [int(p) for p in self.axon.points[self.pos]], 3)
         return [oldc, newc]
        
         
@@ -169,7 +171,7 @@ def build_loop():
         #    ax.draw(screen)
             
         if len(pts)>1:
-            pygame.draw.lines(screen, BLACK, False, pts, 5)
+            pygame.draw.aalines(screen, BLACK, False, pts, 5)
         #for i in range(len(xx)-1):
         #    pygame.draw.line(screen, (200, 200, 200), (xx[i], yy[i]), (xx[i+1], yy[i+1]))
             
@@ -196,7 +198,9 @@ def run_loop(all_neurons):
     buttons.add(stop_button)
 
     firing_neuron_image=pygame.image.load("firing_neuron.bmp").convert()
+    firing_neuron_image.set_colorkey(WHITE)
     neuron_image=pygame.image.load("neuron.bmp").convert()
+    neuron_image.set_colorkey(WHITE)
     plt=pygame.Surface((plot_len, 50))    
     
     APs=[]
@@ -212,6 +216,7 @@ def run_loop(all_neurons):
     #v2=neuron.h.Vector()
     #v2.record(all_neurons.sprites()[1].mod(0.5)._ref_v)
 
+    
     neuron.h.finitialize(-60)
     neuron.run(plot_len)
     v=np.ones(plot_len)*-60
@@ -289,7 +294,7 @@ def run_loop(all_neurons):
         all_neurons.draw(screen)
 
         for counter, neur in enumerate(all_neurons.sprites()):
-            dirty_recs+=neur.drawAxons()
+            #dirty_recs+=neur.drawAxons()
             dirty_recs.append(neur.rect)
             recv[counter].resize(0)
         
@@ -304,12 +309,14 @@ def run_loop(all_neurons):
         v=np.append(v[1::], [all_neurons.sprites()[0].mod(0.5).v])
         vmax=np.max(v)
         vmin=np.min(v)-1
-                
-        plist=[]
-        for i in range(plot_len):
-            plist+=[[i, 50-49*(v[i]-vmin)/(vmax-vmin)]]
+        #plist=[]
+#        for i in range(plot_len):
+#            plist+=[[i, 50-49*(v[i]-vmin)/(vmax-vmin)]]
+        v_scaled=50-49*(v-vmin)/(vmax-vmin)
+        plist=np.stack((np.array(range(plot_len)), v_scaled))
+        
         plt.fill(bgcolor)
-        pygame.draw.lines(plt, BLUE, False, plist)
+        pygame.draw.lines(plt, BLUE, False, np.transpose(plist))
         dirty_recs.append(screen.blit(plt, (100, 100)))
         
         pygame.display.update(dirty_recs)
