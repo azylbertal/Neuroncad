@@ -184,7 +184,6 @@ def build_loop():
     
         pygame.display.flip()
         
-@profile
 def run_loop(all_neurons):
     
     vmin=-70.

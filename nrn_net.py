@@ -4,29 +4,51 @@ import neuron
 #import matplotlib.pyplot as plt
 import numpy as np
 import cProfile, pstats, StringIO
-#from time import sleep
+from time import sleep
 import eztext
 
 BLACK = (  0,   0,   0)
 WHITE = (255, 255, 255)
 RED   = (255,   0,   0)
 BLUE  = (0,   0,   255)
-width = 800
-height = 600
+width = 1024
+height = 768
 
 step=0.1
     
 class Neuron(pygame.sprite.Sprite):
-    def __init__(self, x, y):
+    def __init__(self, x, y, tp):
     
         super(Neuron, self).__init__()  
-        self.image = pygame.image.load("neuron.bmp").convert()
+        if tp=='excitatory':        
+            self.image = pygame.image.load("pyramidal.bmp").convert()
+            self.super_type='neuron'
+        elif tp=='inhibitory':        
+            self.image = pygame.image.load("interneuron.bmp").convert()
+            self.super_type='neuron'
+        elif tp=='rightclockwise':
+            self.image = pygame.image.load("right_clockwise.bmp").convert()
+            self.super_type='motor'
+        elif tp=='rightanticlockwise':        
+            self.image = pygame.image.load("right_anticlockwise.bmp").convert()
+            self.super_type='motor'
+        elif tp=='leftclockwise':        
+            self.image = pygame.image.load("left_clockwise.bmp").convert()
+            self.super_type='motor'
+        elif tp=='leftanticlockwise':        
+            self.image = pygame.image.load("left_anticlockwise.bmp").convert()
+            self.super_type='motor'
+
+        self.tp=tp
         self.image.set_colorkey(WHITE)
         self.rect = self.image.get_rect()
         self.rect.x=x-self.rect.width/2
         self.rect.y=y-self.rect.height/2
         self.mod=neuron.h.Section()
-        self.mod.insert('hh')
+        if self.super_type=='neuron':        
+            self.mod.insert('hh')
+        elif self.super_type=='motor':
+            self.mod.insert('pas')
         self.fire_counter=0
         self.axons=[]
         
@@ -36,7 +58,17 @@ class Neuron(pygame.sprite.Sprite):
             recs.append(axon.draw(screen))
         return recs
         
-
+class Button(pygame.sprite.Sprite):
+    def __init__(self, imgf, x, y, tp=None):
+        
+        super(Button, self).__init__()
+        self.image = pygame.image.load(imgf).convert()
+        self.image.set_colorkey(WHITE)
+        self.rect = self.image.get_rect()
+        self.rect.x=x
+        self.rect.y=y
+        self.tp=tp
+        
 class Axon():
     def __init__(self, startp, endp, points):
         
@@ -71,6 +103,7 @@ class AP():
        
         
         
+
 def inter(pt1, pt2):
     ln_x=float(pt2[0])-pt1[0]
     ln_y=float(pt2[1])-pt1[1]
@@ -81,6 +114,7 @@ def inter(pt1, pt2):
         
     return int_pts 
 
+
 def build_loop():
 
     all_neurons = pygame.sprite.Group()
@@ -89,21 +123,29 @@ def build_loop():
     downflag=False;
     pts=[]
     building=1
-    run_button=pygame.sprite.Sprite()
-    run_button.image=pygame.image.load("run.bmp").convert()
-    run_button.rect=run_button.image.get_rect()
-    run_button.rect.x=width-run_button.rect.width
-    run_button.rect.y=height-run_button.rect.height
+
+    run_button=Button('run.bmp', width-80, height-50)
     buttons.add(run_button)
-    exit_button=pygame.sprite.Sprite()
-    exit_button.image=pygame.image.load("exit.bmp").convert()
-    exit_button.rect=exit_button.image.get_rect()
-    exit_button.rect.x=width-run_button.rect.width-exit_button.rect.width
-    exit_button.rect.y=height-exit_button.rect.height
+    exit_button=Button('exit.bmp', width-120, height-40)
     buttons.add(exit_button)
+    excitatory_button=Button('pyramidal.bmp', 10, 10, 'excitatory')
+    buttons.add(excitatory_button)
+    inhibitory_button=Button('interneuron.bmp', 90, 10, 'inhibitory')
+    buttons.add(inhibitory_button)
+    rightclockwise_button=Button('right_clockwise.bmp', 180, 10, 'rightclockwise')
+    buttons.add(rightclockwise_button)
+    rightanticlockwise_button=Button('right_anticlockwise.bmp', 270, 10, 'rightanticlockwise')
+    buttons.add(rightanticlockwise_button)
+    leftclockwise_button=Button('left_clockwise.bmp', 360, 10, 'leftclockwise')
+    buttons.add(leftclockwise_button)
+    leftanticlockwise_button=Button('left_anticlockwise.bmp', 450, 10, 'leftanticlockwise')
+    buttons.add(leftanticlockwise_button)
+    
+    focus=excitatory_button
     
     txtbx=eztext.Input(maxlength=6, color=BLUE,y=100, prompt='type here ')
     txtbx.focus=True
+    
     while building:
         
         
@@ -130,8 +172,21 @@ def build_loop():
                     run_loop(all_neurons)
                 elif exit_button.rect.collidepoint([x, y]):
                     return 0
+                elif excitatory_button.rect.collidepoint([x, y]):
+                    focus=excitatory_button
+                elif inhibitory_button.rect.collidepoint([x, y]):
+                    focus=inhibitory_button
+                elif rightclockwise_button.rect.collidepoint([x, y]):
+                    focus=rightclockwise_button
+                elif rightanticlockwise_button.rect.collidepoint([x, y]):
+                    focus=rightanticlockwise_button
+                elif leftclockwise_button.rect.collidepoint([x, y]):
+                    focus=leftclockwise_button
+                elif leftanticlockwise_button.rect.collidepoint([x, y]):
+                    focus=leftanticlockwise_button
+
                 else:
-                    all_neurons.add(Neuron(x,y))
+                    all_neurons.add(Neuron(x,y, focus.tp))
                 
                 
     
@@ -167,6 +222,9 @@ def build_loop():
         buttons.draw(screen)
         txtbx.update(event)
         txtbx.draw(screen)
+        pygame.draw.rect(screen, RED, focus.rect, 2)
+        
+        
         #for ax in axons:
         #    ax.draw(screen)
             
@@ -179,7 +237,6 @@ def build_loop():
     
         pygame.display.flip()
         
-@profile
 def run_loop(all_neurons):
     
     vmin=-70.
@@ -197,10 +254,10 @@ def run_loop(all_neurons):
     stop_button.rect.y=height-stop_button.rect.height
     buttons.add(stop_button)
 
-    firing_neuron_image=pygame.image.load("firing_neuron.bmp").convert()
-    firing_neuron_image.set_colorkey(WHITE)
-    neuron_image=pygame.image.load("neuron.bmp").convert()
-    neuron_image.set_colorkey(WHITE)
+    #firing_neuron_image=pygame.image.load("firing_neuron.bmp").convert()
+    #firing_neuron_image.set_colorkey(WHITE)
+    #neuron_image=pygame.image.load("neuron.bmp").convert()
+    #neuron_image.set_colorkey(WHITE)
     plt=pygame.Surface((plot_len, 50))    
     
     APs=[]
@@ -231,7 +288,9 @@ def run_loop(all_neurons):
     pygame.display.flip()
     while running:
         
-        
+       
+        right_power=0.
+        left_power=0.
 
         for counter, neur in enumerate(all_neurons.sprites()):
             
@@ -239,9 +298,25 @@ def run_loop(all_neurons):
                 max_v=np.max(np.array(recv[counter]))
             except:
             	max_v=0.
-            if max_v>25.0 and neur.fire_counter==0:
+            
+            if neur.super_type=='motor':
+                try:
+                    mean_v=70+np.mean(np.array(recv[counter]))
+                except:
+                    mean_v=0.
+                    
+                if neur.tp=='rightclockwise':
+                    right_power+=mean_v
+                elif neur.tp=='rightanticlockwise':
+                    right_power-=mean_v
+                elif neur.tp=='leftclockwise':
+                    left_power+=mean_v
+                elif neur.tp=='leftanticlockwise':
+                    left_power-=mean_v
+            
+            if neur.super_type=='neuron' and max_v>25.0 and neur.fire_counter==0:
                 neur.fire_counter=fire_image_delay
-                neur.image=firing_neuron_image
+                #neur.image=firing_neuron_image
                 #dirty_recs.append(neur.rect)
                 for ax in neur.axons:
                     APs.append(AP(ax))
@@ -250,10 +325,10 @@ def run_loop(all_neurons):
                 
                 #neur.image=firing_neuron_image
                 neur.fire_counter-=1
-                if neur.fire_counter==0:
-                    neur.image=neuron_image
+                #if neur.fire_counter==0:
+                #    neur.image=neuron_image
                     #dirty_recs.append(neur.rect)
-                
+        
         event = pygame.event.poll()
         (x, y)=pygame.mouse.get_pos()    
         if event.type == pygame.QUIT:
@@ -291,11 +366,11 @@ def run_loop(all_neurons):
         
         
         
-        all_neurons.draw(screen)
+        #all_neurons.draw(screen)
 
         for counter, neur in enumerate(all_neurons.sprites()):
             #dirty_recs+=neur.drawAxons()
-            dirty_recs.append(neur.rect)
+            #dirty_recs.append(neur.rect)
             recv[counter].resize(0)
         
         for ap in APs:
