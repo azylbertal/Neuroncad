@@ -6,6 +6,7 @@ import numpy as np
 import cProfile, pstats, StringIO
 from time import sleep
 import eztext
+import RPi.GPIO as io
 
 BLACK = (  0,   0,   0)
 WHITE = (255, 255, 255)
@@ -15,7 +16,28 @@ width = 1024
 height = 768
 
 step=0.1
-    
+io.setmode(io.BCM)
+
+forward_left=17
+backward_left=18
+forward_right=23
+backward_right=22
+
+io.setup(forward_left, io.OUT)
+io.setup(backward_left, io.OUT)
+io.setup(forward_right, io.OUT)
+io.setup(backward_right, io.OUT)
+
+forward_left_pwm=io.PWM(forward_left, 500)
+backward_left_pwm=io.PWM(backward_left, 500)
+forward_right_pwm=io.PWM(forward_right, 500)
+backward_right_pwm=io.PWM(backward_right, 500)
+
+forward_left_pwm.start(0)
+backward_left_pwm.start(0)
+forward_right_pwm.start(0)
+backward_right_pwm.start(0)
+
 class Neuron(pygame.sprite.Sprite):
     def __init__(self, x, y, tp):
     
@@ -301,7 +323,7 @@ def run_loop(all_neurons):
             
             if neur.super_type=='motor':
                 try:
-                    mean_v=70+np.mean(np.array(recv[counter]))
+                    mean_v=2*(70+np.mean(np.array(recv[counter])))
                 except:
                     mean_v=0.
                     
@@ -329,7 +351,30 @@ def run_loop(all_neurons):
                 #    neur.image=neuron_image
                     #dirty_recs.append(neur.rect)
         
-        event = pygame.event.poll()
+        if abs(left_power)>0.00001:
+		if left_power>0:
+			backward_left_pwm.ChangeDutyCycle(0)			
+			forward_left_pwm.ChangeDutyCycle(int(left_power))
+			
+		else:
+			forward_left_pwm.ChangeDutyCycle(0)
+			backward_left_pwm.ChangeDutyCycle(-int(left_power))
+	else:
+		forward_left_pwm.ChangeDutyCycle(0)
+		backward_right_pwm.ChangeDutyCycle(0)
+
+	if abs(right_power)>0.00001:
+		if right_power>0:
+			backward_right_pwm.ChangeDutyCycle(0)
+			forward_right_pwm.ChangeDutyCycle(int(right_power))
+		else:
+			forward_right_pwm.ChangeDutyCycle(0)
+			backward_right_pwm.ChangeDutyCycle(-int(right_power))
+	else:
+		forward_right_pwm.ChangeDutyCycle(0)
+		backward_right_pwm.ChangeDutyCycle(0)
+
+	event = pygame.event.poll()
         (x, y)=pygame.mouse.get_pos()    
         if event.type == pygame.QUIT:
             return 0
@@ -424,4 +469,5 @@ sortby = 'cumulative'
 ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
 ps.print_stats()
 print s.getvalue()
+io.cleanup()
 pygame.quit()
