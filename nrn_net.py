@@ -30,7 +30,7 @@ height = 768
 step=0.1
 
 
-ir_conversion=200.
+ir_conversion=50.
 motors=False
 sensors=False
 
@@ -59,6 +59,7 @@ class Neuron(pygame.sprite.Sprite):
             self.super_type='motor'
         elif tp=='irsensor':
             self.image = pygame.image.load("ir_sensor.bmp").convert()
+	    self.ir_stm=0
             self.super_type='sensor'
 
         self.tp=tp
@@ -298,7 +299,8 @@ def run_loop(all_neurons):
         backward_left_pwm.start(0)
         forward_right_pwm.start(0)
         backward_right_pwm.start(0)
-        
+
+    sensors_init=0        
     vmin=-70.
     vmax=80.   
     plot_len=300    
@@ -348,6 +350,8 @@ def run_loop(all_neurons):
     pygame.display.flip()
     while running:
         
+	if sensors_init<500:
+		sensors_init+=1
        
         right_power=0.
         left_power=0.
@@ -359,12 +363,12 @@ def run_loop(all_neurons):
             except:
             	max_v=0.
             
-            if neur.tp=='irsensor':
+            if neur.tp=='irsensor' and sensors_init==500:
                 ir_range=ReadChannel(0)
-                ir_stm=neuron.h.IClamp(neur.mod(0.5))
-                ir_stm.delay=neuron.h.t#+step
-                ir_stm.dur=step
-                ir_stm.amp=ir_range/ir_conversion
+                neur.ir_stm=neuron.h.IClamp(neur.mod(0.5))
+                neur.ir_stm.delay=neuron.h.t
+                neur.ir_stm.dur=step
+                neur.ir_stm.amp=ir_range/ir_conversion
                 
             if neur.super_type=='motor':
                 try:
@@ -396,7 +400,7 @@ def run_loop(all_neurons):
                 #    neur.image=neuron_image
                     #dirty_recs.append(neur.rect)
         
-        if RPI:
+        if motors:
             if abs(left_power)>0.00001:
                 if left_power>0:
                     backward_left_pwm.ChangeDutyCycle(0)			
