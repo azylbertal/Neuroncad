@@ -7,6 +7,7 @@ import cProfile, pstats, StringIO
 from time import sleep
 import eztext
 import RPi.GPIO as io
+import spidev
 
 BLACK = (  0,   0,   0)
 WHITE = (255, 255, 255)
@@ -17,6 +18,8 @@ height = 768
 
 step=0.1
 io.setmode(io.BCM)
+spi=spidev.SpiDev()
+spi.open(0,0)
 
 forward_left=17
 backward_left=18
