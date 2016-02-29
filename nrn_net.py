@@ -210,8 +210,6 @@ def build_loop():
                     focus=inhibitory_button
                 elif irsensor_button.rect.collidepoint([x, y]):
                     focus=irsensor_button
-                else:
-                    all_neurons.add(Neuron(x,y, focus.tp))
 
                 if RPI:
                     if rightclockwise_button.rect.collidepoint([x, y]):
@@ -223,8 +221,9 @@ def build_loop():
                     elif leftanticlockwise_button.rect.collidepoint([x, y]):
                         focus=leftanticlockwise_button
 
-                    else:
-                        all_neurons.add(Neuron(x,y, focus.tp))
+                if y>150 and y<height-100:
+                    all_neurons.add(Neuron(x, y, focus.tp))                    
+            
                 
                 
     
