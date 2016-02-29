@@ -6,9 +6,20 @@ import numpy as np
 import cProfile, pstats, StringIO
 from time import sleep
 import eztext
-import RPi.GPIO as io
-import spidev
 
+try:
+    import RPi.GPIO as io
+    import spidev
+    RPI=True
+    
+except:
+    RPI=False
+            
+if RPI:
+    io.setmode(io.BCM)
+    spi=spidev.SpiDev()
+    spi.open(0,0)
+    
 BLACK = (  0,   0,   0)
 WHITE = (255, 255, 255)
 RED   = (255,   0,   0)
@@ -17,33 +28,16 @@ width = 1024
 height = 768
 
 step=0.1
-io.setmode(io.BCM)
-spi=spidev.SpiDev()
-spi.open(0,0)
 
-forward_left=17
-backward_left=18
-forward_right=23
-backward_right=22
 
-io.setup(forward_left, io.OUT)
-io.setup(backward_left, io.OUT)
-io.setup(forward_right, io.OUT)
-io.setup(backward_right, io.OUT)
+ir_conversion=200.
+motors=False
+sensors=False
 
-forward_left_pwm=io.PWM(forward_left, 500)
-backward_left_pwm=io.PWM(backward_left, 500)
-forward_right_pwm=io.PWM(forward_right, 500)
-backward_right_pwm=io.PWM(backward_right, 500)
-
-forward_left_pwm.start(0)
-backward_left_pwm.start(0)
-forward_right_pwm.start(0)
-backward_right_pwm.start(0)
 
 class Neuron(pygame.sprite.Sprite):
     def __init__(self, x, y, tp):
-    
+        global motors, sensors
         super(Neuron, self).__init__()  
         if tp=='excitatory':        
             self.image = pygame.image.load("pyramidal.bmp").convert()
@@ -63,6 +57,9 @@ class Neuron(pygame.sprite.Sprite):
         elif tp=='leftanticlockwise':        
             self.image = pygame.image.load("left_anticlockwise.bmp").convert()
             self.super_type='motor'
+        elif tp=='irsensor':
+            self.image = pygame.image.load("ir_sensor.bmp").convert()
+            self.super_type='sensor'
 
         self.tp=tp
         self.image.set_colorkey(WHITE)
@@ -70,10 +67,12 @@ class Neuron(pygame.sprite.Sprite):
         self.rect.x=x-self.rect.width/2
         self.rect.y=y-self.rect.height/2
         self.mod=neuron.h.Section()
-        if self.super_type=='neuron':        
+        if self.super_type=='neuron' or self.super_type=='sensor':        
             self.mod.insert('hh')
+            sensors=True
         elif self.super_type=='motor':
             self.mod.insert('pas')
+            motors=True
         self.fire_counter=0
         self.axons=[]
         
@@ -128,7 +127,11 @@ class AP():
        
         
         
-
+def ReadChannel(channel):
+    adc = spi.xfer2([1,(8+channel)<<4,0])
+    data = ((adc[1]&3) << 8) + adc[2]
+    return data
+  
 def inter(pt1, pt2):
     ln_x=float(pt2[0])-pt1[0]
     ln_y=float(pt2[1])-pt1[1]
@@ -157,14 +160,18 @@ def build_loop():
     buttons.add(excitatory_button)
     inhibitory_button=Button('interneuron.bmp', 90, 10, 'inhibitory')
     buttons.add(inhibitory_button)
-    rightclockwise_button=Button('right_clockwise.bmp', 180, 10, 'rightclockwise')
-    buttons.add(rightclockwise_button)
-    rightanticlockwise_button=Button('right_anticlockwise.bmp', 270, 10, 'rightanticlockwise')
-    buttons.add(rightanticlockwise_button)
-    leftclockwise_button=Button('left_clockwise.bmp', 360, 10, 'leftclockwise')
-    buttons.add(leftclockwise_button)
-    leftanticlockwise_button=Button('left_anticlockwise.bmp', 450, 10, 'leftanticlockwise')
-    buttons.add(leftanticlockwise_button)
+    if RPI:
+        rightclockwise_button=Button('right_clockwise.bmp', 180, 10, 'rightclockwise')
+        buttons.add(rightclockwise_button)
+        rightanticlockwise_button=Button('right_anticlockwise.bmp', 270, 10, 'rightanticlockwise')
+        buttons.add(rightanticlockwise_button)
+        leftclockwise_button=Button('left_clockwise.bmp', 360, 10, 'leftclockwise')
+        buttons.add(leftclockwise_button)
+        leftanticlockwise_button=Button('left_anticlockwise.bmp', 450, 10, 'leftanticlockwise')
+        buttons.add(leftanticlockwise_button)
+    
+    irsensor_button=Button('ir_sensor.bmp', 540, 10, 'irsensor')
+    buttons.add(irsensor_button)
     
     focus=excitatory_button
     
@@ -201,17 +208,23 @@ def build_loop():
                     focus=excitatory_button
                 elif inhibitory_button.rect.collidepoint([x, y]):
                     focus=inhibitory_button
-                elif rightclockwise_button.rect.collidepoint([x, y]):
-                    focus=rightclockwise_button
-                elif rightanticlockwise_button.rect.collidepoint([x, y]):
-                    focus=rightanticlockwise_button
-                elif leftclockwise_button.rect.collidepoint([x, y]):
-                    focus=leftclockwise_button
-                elif leftanticlockwise_button.rect.collidepoint([x, y]):
-                    focus=leftanticlockwise_button
-
+                elif irsensor_button.rect.collidepoint([x, y]):
+                    focus=irsensor_button
                 else:
                     all_neurons.add(Neuron(x,y, focus.tp))
+
+                if RPI:
+                    if rightclockwise_button.rect.collidepoint([x, y]):
+                        focus=rightclockwise_button
+                    elif rightanticlockwise_button.rect.collidepoint([x, y]):
+                        focus=rightanticlockwise_button
+                    elif leftclockwise_button.rect.collidepoint([x, y]):
+                        focus=leftclockwise_button
+                    elif leftanticlockwise_button.rect.collidepoint([x, y]):
+                        focus=leftanticlockwise_button
+
+                    else:
+                        all_neurons.add(Neuron(x,y, focus.tp))
                 
                 
     
@@ -264,6 +277,29 @@ def build_loop():
         
 def run_loop(all_neurons):
     
+    global motors    
+    
+    if motors:
+        forward_left=17
+        backward_left=18
+        forward_right=23
+        backward_right=22
+        
+        io.setup(forward_left, io.OUT)
+        io.setup(backward_left, io.OUT)
+        io.setup(forward_right, io.OUT)
+        io.setup(backward_right, io.OUT)
+        
+        forward_left_pwm=io.PWM(forward_left, 500)
+        backward_left_pwm=io.PWM(backward_left, 500)
+        forward_right_pwm=io.PWM(forward_right, 500)
+        backward_right_pwm=io.PWM(backward_right, 500)
+        
+        forward_left_pwm.start(0)
+        backward_left_pwm.start(0)
+        forward_right_pwm.start(0)
+        backward_right_pwm.start(0)
+        
     vmin=-70.
     vmax=80.   
     plot_len=300    
@@ -324,6 +360,13 @@ def run_loop(all_neurons):
             except:
             	max_v=0.
             
+            if neur.tp=='irsensor':
+                ir_range=ReadChannel(0)
+                ir_stm=neuron.h.IClamp(neur.mod(0.5))
+                ir_stm.delay=neuron.h.t#+step
+                ir_stm.dur=step
+                ir_stm.amp=ir_range/ir_conversion
+                
             if neur.super_type=='motor':
                 try:
                     mean_v=2*(70+np.mean(np.array(recv[counter])))
@@ -339,7 +382,7 @@ def run_loop(all_neurons):
                 elif neur.tp=='leftanticlockwise':
                     left_power-=mean_v
             
-            if neur.super_type=='neuron' and max_v>25.0 and neur.fire_counter==0:
+            if not neur.super_type=='motor' and max_v>25.0 and neur.fire_counter==0:
                 neur.fire_counter=fire_image_delay
                 #neur.image=firing_neuron_image
                 #dirty_recs.append(neur.rect)
@@ -354,30 +397,30 @@ def run_loop(all_neurons):
                 #    neur.image=neuron_image
                     #dirty_recs.append(neur.rect)
         
-        if abs(left_power)>0.00001:
-		if left_power>0:
-			backward_left_pwm.ChangeDutyCycle(0)			
-			forward_left_pwm.ChangeDutyCycle(int(left_power))
-			
-		else:
-			forward_left_pwm.ChangeDutyCycle(0)
-			backward_left_pwm.ChangeDutyCycle(-int(left_power))
-	else:
-		forward_left_pwm.ChangeDutyCycle(0)
-		backward_right_pwm.ChangeDutyCycle(0)
+        if RPI:
+            if abs(left_power)>0.00001:
+                if left_power>0:
+                    backward_left_pwm.ChangeDutyCycle(0)			
+                    forward_left_pwm.ChangeDutyCycle(int(left_power))
+                else:
+                    forward_left_pwm.ChangeDutyCycle(0)
+                    backward_left_pwm.ChangeDutyCycle(-int(left_power))
+            else:
+                forward_left_pwm.ChangeDutyCycle(0)
+                backward_right_pwm.ChangeDutyCycle(0)
+    
+            if abs(right_power)>0.00001:
+                if right_power>0:
+                    backward_right_pwm.ChangeDutyCycle(0)
+                    forward_right_pwm.ChangeDutyCycle(int(right_power))
+                else:
+                    forward_right_pwm.ChangeDutyCycle(0)
+                    backward_right_pwm.ChangeDutyCycle(-int(right_power))
+            else:
+                forward_right_pwm.ChangeDutyCycle(0)
+                backward_right_pwm.ChangeDutyCycle(0)
 
-	if abs(right_power)>0.00001:
-		if right_power>0:
-			backward_right_pwm.ChangeDutyCycle(0)
-			forward_right_pwm.ChangeDutyCycle(int(right_power))
-		else:
-			forward_right_pwm.ChangeDutyCycle(0)
-			backward_right_pwm.ChangeDutyCycle(-int(right_power))
-	else:
-		forward_right_pwm.ChangeDutyCycle(0)
-		backward_right_pwm.ChangeDutyCycle(0)
-
-	event = pygame.event.poll()
+        event = pygame.event.poll()
         (x, y)=pygame.mouse.get_pos()    
         if event.type == pygame.QUIT:
             return 0
@@ -472,5 +515,6 @@ sortby = 'cumulative'
 ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
 ps.print_stats()
 print s.getvalue()
-io.cleanup()
+if RPI:
+    io.cleanup()
 pygame.quit()
