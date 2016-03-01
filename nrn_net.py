@@ -237,13 +237,13 @@ def build_loop():
 
     if RPI:
         rightforward_button=Button('rightforward.bmp', 180, 10, 'rightforward')
-        buttons.add(rightclockwise_button)
-        rightanticlockwise_button=Button('rightbackward.bmp', 270, 10, 'rightbackward')
-        buttons.add(rightanticlockwise_button)
-        leftclockwise_button=Button('leftforward.bmp', 360, 10, 'leftforward')
-        buttons.add(leftclockwise_button)
-        leftanticlockwise_button=Button('leftbackward.bmp', 450, 10, 'leftbackward')
-        buttons.add(leftanticlockwise_button)
+        buttons.add(rightforward_button)
+        rightbackward_button=Button('rightbackward.bmp', 270, 10, 'rightbackward')
+        buttons.add(rightbackward_button)
+        leftforward_button=Button('leftforward.bmp', 360, 10, 'leftforward')
+        buttons.add(leftforward_button)
+        leftbackward_button=Button('leftbackward.bmp', 450, 10, 'leftbackward')
+        buttons.add(leftbackward_button)
         irsensor_button=Button('ir_sensor.bmp', 540, 10, 'irsensor')
         buttons.add(irsensor_button)
 
@@ -301,14 +301,14 @@ def build_loop():
 
 
                 if RPI:
-                    if rightclockwise_button.rect.collidepoint([x, y]):
-                        focus=rightclockwise_button
-                    elif rightanticlockwise_button.rect.collidepoint([x, y]):
-                        focus=rightanticlockwise_button
-                    elif leftclockwise_button.rect.collidepoint([x, y]):
-                        focus=leftclockwise_button
-                    elif leftanticlockwise_button.rect.collidepoint([x, y]):
-                        focus=leftanticlockwise_button
+                    if rightforward_button.rect.collidepoint([x, y]):
+                        focus=rightforward_button
+                    elif rightbackward_button.rect.collidepoint([x, y]):
+                        focus=rightbackward_button
+                    elif leftforward_button.rect.collidepoint([x, y]):
+                        focus=leftforward_button
+                    elif leftbackward_button.rect.collidepoint([x, y]):
+                        focus=leftbackward_button
                     elif irsensor_button.rect.collidepoint([x, y]):
                         focus=irsensor_button
 
@@ -466,7 +466,7 @@ def run_loop(all_neurons):
 
             if neur.super_type=='motor':
                 try:
-                    mean_v=2*(70+np.mean(np.array(recv[counter])))
+                    mean_v=5*(70+np.mean(np.array(recv[counter])))
                 except:
                     mean_v=0.
 
@@ -497,9 +497,13 @@ def run_loop(all_neurons):
         if motors:
             if abs(left_power)>0.00001:
                 if left_power>0:
+                    if left_power>100:
+                        left_power=100
                     backward_left_pwm.ChangeDutyCycle(0)			
                     forward_left_pwm.ChangeDutyCycle(int(left_power))
                 else:
+                    if left_power<-100:
+                        left_power=-100
                     forward_left_pwm.ChangeDutyCycle(0)
                     backward_left_pwm.ChangeDutyCycle(-int(left_power))
             else:
@@ -508,9 +512,13 @@ def run_loop(all_neurons):
 
             if abs(right_power)>0.00001:
                 if right_power>0:
+                    if right_power>100:
+                        right_power=100
                     backward_right_pwm.ChangeDutyCycle(0)
                     forward_right_pwm.ChangeDutyCycle(int(right_power))
                 else:
+                    if right_power<-100:
+                        right_power=-100
                     forward_right_pwm.ChangeDutyCycle(0)
                     backward_right_pwm.ChangeDutyCycle(-int(right_power))
             else:
