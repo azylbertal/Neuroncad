@@ -1,5 +1,5 @@
 import pygame
-import math
+import math, pickle, dill
 import neuron
 #import matplotlib.pyplot as plt
 import numpy as np
@@ -24,19 +24,19 @@ BLACK = (  0,   0,   0)
 WHITE = (255, 255, 255)
 RED   = (255,   0,   0)
 BLUE  = (0,   0,   255)
-width = 1024
+width = 1224
 height = 768
 
 step=0.1
 
-
+downSampleFactor=10.
 ir_conversion=50.
 motors=False
 sensors=False
 
 
 class Neuron(pygame.sprite.Sprite):
-    def __init__(self, x, y, tp):
+    def __init__(self, x, y, tp, shift=True, nid=None):
         global motors, sensors
         super(Neuron, self).__init__()  
         if tp=='excitatory':        
@@ -59,14 +59,21 @@ class Neuron(pygame.sprite.Sprite):
             self.super_type='motor'
         elif tp=='irsensor':
             self.image = pygame.image.load("ir_sensor.bmp").convert()
-	    self.ir_stm=0
+            self.ir_stm=0
             self.super_type='sensor'
-
+        
+        self.nid=nid
+        
         self.tp=tp
         self.image.set_colorkey(WHITE)
         self.rect = self.image.get_rect()
-        self.rect.x=x-self.rect.width/2
-        self.rect.y=y-self.rect.height/2
+        if shift:        
+            self.rect.x=x-self.rect.width/2
+            self.rect.y=y-self.rect.height/2
+        else:
+            self.rect.x=x
+            self.rect.y=y
+            
         self.mod=neuron.h.Section()
         if self.super_type=='neuron' or self.super_type=='sensor':        
             self.mod.insert('hh')
@@ -76,12 +83,26 @@ class Neuron(pygame.sprite.Sprite):
             motors=True
         self.fire_counter=0
         self.axons=[]
-        
+
     def drawAxons(self):
         recs=[]
         for axon in self.axons:
             recs.append(axon.draw(screen))
         return recs
+    
+    def pickledAxons(self):
+        paxons=[]
+        for axon in self.axons:
+            paxons+=[{'points':axon.points, 'weight':axon.w, 'start':axon.start_id, 'end':axon.end_id}]
+        return paxons
+        
+class pickledNeuron():
+    def __init__(self, nrn):
+        self.rect=nrn.rect
+        self.tp=nrn.tp
+        self.super_type=nrn.super_type
+        self.nid=nrn.nid
+        self.axons=nrn.pickledAxons()
         
 class Button(pygame.sprite.Sprite):
     def __init__(self, imgf, x, y, tp=None):
@@ -95,23 +116,34 @@ class Button(pygame.sprite.Sprite):
         self.tp=tp
         
 class Axon():
-    def __init__(self, startp, endp, points):
+    def __init__(self, startp, endp, points, tp, weight, start_id, end_id, interp=True):
         
-        #self.startp=startp
-        self.endp=endp
-        self.points=[]
-        for p in range(len(points)-1):
-            self.points+=inter(points[p], points[p+1])
+        self.start_id=start_id
+        self.end_id=end_id
+        
+        if interp:        
+            self.points=[]
+            for p in range(len(points)-1):
+                self.points+=inter(points[p], points[p+1])
+        else:
+            self.points=points
         self.len=len(self.points)
         self.syn=neuron.h.ExpSyn(endp.mod(0.5))
         self.syn.tau=4
-        self.w=0.5
-        
+        #self.rect=0
+        self.w=weight
+        self.tp=tp
+        if tp=='excitatory':
+            self.cl=BLUE
+            self.syn.e=0.0
+        elif tp=='inhibitory':
+            self.cl=RED
+            self.syn.e=-70.0
         self.con=neuron.h.NetCon(startp.mod(0.5)._ref_v, self.syn, 25.0, self.len*step, self.w, sec=startp.mod)
                 
     
     def draw(self, screen):
-        return pygame.draw.lines(screen, BLUE, False, self.points, 8)
+        return pygame.draw.lines(screen, self.cl, False, self.points, int(self.w*20))
 
 
 class AP():
@@ -120,14 +152,48 @@ class AP():
         self.pos=0
     def draw_and_advance(self):
         #oldc1=pygame.draw.circle(screen, bgcolor, [int(p) for p in self.axon.points[self.pos]], 5)        
-        oldc=pygame.draw.circle(screen, BLUE, [int(p) for p in self.axon.points[self.pos]], 3)
+        oldc=pygame.draw.circle(screen, WHITE, [int(p) for p in self.axon.points[self.pos]], 7)
         #old_line=pygame.draw.line(screen, BLUE, [int(p) for p in self.axon.points[self.pos]], [int(pp) for pp in self.axon.points[self.pos+1]], 6)
         self.pos+=1
-        newc=pygame.draw.circle(screen, WHITE, [int(p) for p in self.axon.points[self.pos]], 3)
+        newc=pygame.draw.circle(screen, self.axon.cl, [int(p) for p in self.axon.points[self.pos]], 7)
         return [oldc, newc]
+    def clear(self):
+        return [pygame.draw.circle(screen, WHITE, [int(p) for p in self.axon.points[self.pos]], 7)]
        
         
         
+def getNeuronsInfo(nrns):
+    
+    neurons=[]
+    
+    for counter, neur in enumerate(nrns.sprites()):
+        
+        neurons+=[pickledNeuron(neur)]
+        
+    return neurons
+
+def setNeuronsInfo(inf):
+    all_neurons = pygame.sprite.Group()
+    
+    for counter, neur in enumerate(inf):
+        nrn=Neuron(neur.rect.x, neur.rect.y, neur.tp, shift=False, nid=neur.nid)
+        all_neurons.add(nrn)
+#rev_list=reversed(all_neurons.sprites())    
+    for counter, neur in enumerate(inf):
+        
+        for paxon in neur.axons:
+                for counter, neur in enumerate(all_neurons.sprites()):
+                    if neur.nid==paxon['start']:
+                        start_nrn=neur
+                    if neur.nid==paxon['end']:
+                        end_nrn=neur
+            
+                start_nrn.axons.append(Axon(start_nrn, end_nrn, paxon['points'], start_nrn.tp, paxon['weight'], paxon['start'], paxon['end'], interp=False))
+
+    return all_neurons
+
+    
+    
 def ReadChannel(channel):
     adc = spi.xfer2([1,(8+channel)<<4,0])
     data = ((adc[1]&3) << 8) + adc[2]
@@ -152,7 +218,7 @@ def build_loop():
     downflag=False;
     pts=[]
     building=1
-
+    nid=0
     run_button=Button('run.bmp', width-80, height-50)
     buttons.add(run_button)
     exit_button=Button('exit.bmp', width-120, height-40)
@@ -161,6 +227,11 @@ def build_loop():
     buttons.add(excitatory_button)
     inhibitory_button=Button('interneuron.bmp', 90, 10, 'inhibitory')
     buttons.add(inhibitory_button)
+    save_button=Button('save.bmp', 1000, 10)
+    buttons.add(save_button)
+    load_button=Button('load.bmp', 1050, 10)
+    buttons.add(load_button)
+
     if RPI:
         rightclockwise_button=Button('right_clockwise.bmp', 180, 10, 'rightclockwise')
         buttons.add(rightclockwise_button)
@@ -170,14 +241,14 @@ def build_loop():
         buttons.add(leftclockwise_button)
         leftanticlockwise_button=Button('left_anticlockwise.bmp', 450, 10, 'leftanticlockwise')
         buttons.add(leftanticlockwise_button)
-    
-    irsensor_button=Button('ir_sensor.bmp', 540, 10, 'irsensor')
-    buttons.add(irsensor_button)
+        irsensor_button=Button('ir_sensor.bmp', 540, 10, 'irsensor')
+        buttons.add(irsensor_button)
     
     focus=excitatory_button
     
-    txtbx=eztext.Input(maxlength=6, color=BLUE,y=100, prompt='type here ')
-    txtbx.focus=True
+    wightbx=eztext.Input(maxlength=6, color=BLUE,x=600, y=10, prompt='Synaptic weight: ')
+    wightbx.value='0.1'
+    wightbx.focus=True
     
     while building:
         
@@ -205,12 +276,23 @@ def build_loop():
                     run_loop(all_neurons)
                 elif exit_button.rect.collidepoint([x, y]):
                     return 0
+                elif save_button.rect.collidepoint([x, y]):
+                    fl=open('try', 'w')
+                    info=getNeuronsInfo(all_neurons)
+                    pickle.dump(info, fl)
+                    fl.close()
+                elif load_button.rect.collidepoint([x, y]):
+                    fl=open('try', 'r')
+                    inf=pickle.load(fl)
+                    all_neurons=setNeuronsInfo(inf)
+                    fl.close()
+                    
+
                 elif excitatory_button.rect.collidepoint([x, y]):
                     focus=excitatory_button
                 elif inhibitory_button.rect.collidepoint([x, y]):
                     focus=inhibitory_button
-                elif irsensor_button.rect.collidepoint([x, y]):
-                    focus=irsensor_button
+                    
 
                 if RPI:
                     if rightclockwise_button.rect.collidepoint([x, y]):
@@ -221,9 +303,12 @@ def build_loop():
                         focus=leftclockwise_button
                     elif leftanticlockwise_button.rect.collidepoint([x, y]):
                         focus=leftanticlockwise_button
+                    elif irsensor_button.rect.collidepoint([x, y]):
+                        focus=irsensor_button
 
                 if y>150 and y<height-100:
-                    all_neurons.add(Neuron(x, y, focus.tp))                    
+                    all_neurons.add(Neuron(x, y, focus.tp, nid=nid))
+                    nid+=1
             
                 
                 
@@ -240,7 +325,11 @@ def build_loop():
                         axon_end=True;
                 
                 if (axon_start and axon_end):
-                    all_neurons.sprites()[start_nrn].axons.append(Axon(all_neurons.sprites()[start_nrn], all_neurons.sprites()[end_nrn], pts))   
+                    tp=all_neurons.sprites()[start_nrn].tp
+                    w=float(wightbx.value)
+                    start_id=all_neurons.sprites()[start_nrn].nid
+                    end_id=all_neurons.sprites()[end_nrn].nid
+                    all_neurons.sprites()[start_nrn].axons.append(Axon(all_neurons.sprites()[start_nrn], all_neurons.sprites()[end_nrn], pts, tp, w, start_id, end_id))   
                     
                 
                 pts=[]
@@ -258,8 +347,8 @@ def build_loop():
         for neur in all_neurons.sprites():
             neur.drawAxons()
         buttons.draw(screen)
-        txtbx.update(event)
-        txtbx.draw(screen)
+        wightbx.update(event)
+        wightbx.draw(screen)
         pygame.draw.rect(screen, RED, focus.rect, 2)
         
         
@@ -349,8 +438,7 @@ def run_loop(all_neurons):
         
     pygame.display.flip()
     while running:
-        
-	if sensors_init<500:
+        if sensors_init<500:
 		sensors_init+=1
        
         right_power=0.
@@ -456,12 +544,9 @@ def run_loop(all_neurons):
         #neuron.run(t)
         
         #t+=1
+                
         
         
-        
-        
-        #all_neurons.draw(screen)
-
         for counter, neur in enumerate(all_neurons.sprites()):
             #dirty_recs+=neur.drawAxons()
             #dirty_recs.append(neur.rect)
@@ -470,27 +555,34 @@ def run_loop(all_neurons):
         for ap in APs:
             dirty_recs+=ap.draw_and_advance() 
             if ap.pos==(ap.axon.len-1):
-                APs.remove(ap)                
+                #dirty_recs+=ap.clear()
+                ap.clear()
+                APs.remove(ap)
+                                
 
         neuron.h.continuerun(t)
         t+=step         
         
         v=np.append(v[1::], [all_neurons.sprites()[0].mod(0.5).v])
         plot_count+=1
-	if plot_count==10:
-		plot_count=0
-		vmax=np.max(v)
-        	vmin=np.min(v)-1
+        if plot_count==downSampleFactor:
+            plot_count=0
+            all_neurons.draw(screen)
+            for counter, neur in enumerate(all_neurons.sprites()):
+                neur.drawAxons()
+
+            vmax=np.max(v)
+            vmin=np.min(v)-1
         
-        	v_scaled=50-49*(v-vmin)/(vmax-vmin)
+            v_scaled=50-49*(v-vmin)/(vmax-vmin)
         
-		plist=np.vstack((np.array(range(plot_len)), v_scaled))
+            plist=np.vstack((np.array(range(plot_len)), v_scaled))
         
-        	plt.fill(bgcolor)
-        	pygame.draw.lines(plt, BLUE, False, np.transpose(plist))
-        	dirty_recs.append(screen.blit(plt, (100, 100)))
-        
-        pygame.display.update(dirty_recs)
+            plt.fill(bgcolor)
+            pygame.draw.lines(plt, BLUE, False, np.transpose(plist))
+            dirty_recs.append(screen.blit(plt, (100, 10)))
+            pygame.display.update()
+
         dirty_recs=[]
     
 
