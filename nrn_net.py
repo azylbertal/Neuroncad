@@ -1,6 +1,8 @@
 import pygame
-import math, pickle, dill
+import math, pickle
 import neuron
+import Tkinter as tk
+import tkFileDialog
 #import matplotlib.pyplot as plt
 import numpy as np
 import cProfile, pstats, StringIO
@@ -277,12 +279,15 @@ def build_loop():
                 elif exit_button.rect.collidepoint([x, y]):
                     return 0
                 elif save_button.rect.collidepoint([x, y]):
-                    fl=open('try', 'w')
+                    file_path = tkFileDialog.asksaveasfilename()  
+                    print file_path
+                    fl=open(file_path, 'w')
                     info=getNeuronsInfo(all_neurons)
                     pickle.dump(info, fl)
                     fl.close()
                 elif load_button.rect.collidepoint([x, y]):
-                    fl=open('try', 'r')
+                    file_path = tkFileDialog.askopenfilename()                    
+                    fl=open(file_path, 'r')
                     inf=pickle.load(fl)
                     all_neurons=setNeuronsInfo(inf)
                     fl.close()
@@ -588,6 +593,8 @@ def run_loop(all_neurons):
 
 
 pygame.init()
+root = tk.Tk()
+root.withdraw()
 
 neuron.h.load_file("stdrun.hoc")
 
