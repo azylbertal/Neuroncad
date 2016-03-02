@@ -6,7 +6,7 @@ import Tkinter as tk
 import tkFileDialog
 #import matplotlib.pyplot as plt
 import numpy as np
-import cProfile, pstats, StringIO
+#import cProfile, pstats, StringIO
 #from time import sleep
 import eztext
 
@@ -313,8 +313,13 @@ def build_loop():
                         focus=irsensor_button
 
                 if y>150 and y<height-100:
-                    all_neurons.add(Neuron(x, y, focus.tp, nid=nid))
-                    nid+=1
+                    on_neuron=False
+                    for counter, neur in enumerate(all_neurons.sprites()):
+                        if neur.rect.collidepoint([x, y]):
+                            on_neuron=True
+                    if not on_neuron:
+                        all_neurons.add(Neuron(x, y, focus.tp, nid=nid))
+                        nid+=1
 
 
 
@@ -410,7 +415,11 @@ def run_loop(all_neurons):
     stop_button.rect.x=width-stop_button.rect.width
     stop_button.rect.y=height-stop_button.rect.height
     buttons.add(stop_button)
-
+    pipette=pygame.sprite.Sprite()
+    pipette.image=pygame.image.load("pipette.bmp").convert()
+    pipette.rect=pipette.image.get_rect()
+    buttons.add(pipette)
+    
     #firing_neuron_image=pygame.image.load("firing_neuron.bmp").convert()
     #firing_neuron_image.set_colorkey(WHITE)
     #neuron_image=pygame.image.load("neuron.bmp").convert()
@@ -419,8 +428,8 @@ def run_loop(all_neurons):
 
     APs=[]
     recv=[]
-    dirty_recs=[]
-
+    recording=False
+    
     for counter, neur in enumerate(all_neurons.sprites()):
         recv+=[neuron.h.Vector()]
         recv[counter].record(neur.mod(0.5)._ref_v)
@@ -532,6 +541,7 @@ def run_loop(all_neurons):
 
         if event.type == pygame.MOUSEBUTTONDOWN:
             downflag=True;
+            mouse_buttons=pygame.mouse.get_pressed()
         if event.type == pygame.MOUSEMOTION:
             if downflag:
 
@@ -547,11 +557,19 @@ def run_loop(all_neurons):
                 return 0
             for counter, neur in enumerate(all_neurons.sprites()):
                 if neur.rect.collidepoint([x, y]):
+                    if mouse_buttons[0]:
                         stm=neuron.h.IClamp(neur.mod(0.5))
                         stm.delay=neuron.h.t#+step
                         stm.dur=10
                         stm.amp=10
-
+                    if mouse_buttons[1]:
+                        rec_neuron=neur
+                        pygame.draw.rect(screen, bgcolor, pipette.rect)
+                        pipette.rect.x=x
+                        pipette.rect.y=y
+                        buttons.draw(screen)
+                        recording=True
+                
 
             downflag=False;
 
@@ -567,7 +585,8 @@ def run_loop(all_neurons):
             recv[counter].resize(0)
 
         for ap in APs:
-            dirty_recs+=ap.draw_and_advance()
+            #dirty_recs+=
+            ap.draw_and_advance()
             if ap.pos==(ap.axon.len-1):
                 #dirty_recs+=ap.clear()
                 ap.clear()
@@ -576,28 +595,31 @@ def run_loop(all_neurons):
 
         neuron.h.continuerun(t)
         t+=step
-
-        v=np.append(v[1::], [all_neurons.sprites()[0].mod(0.5).v])
+#        if plot_count==downSampleFactor:
+#            v=np.append(v[1::], [np.array(all_neurons.sprites()[0].mod(0.5).v)])
         plot_count+=1
+
         if plot_count==downSampleFactor:
             plot_count=0
+            if recording:            
+                v=np.append(v[1::], [np.array(rec_neuron.mod(0.5).v)])
+                vmax=np.max(v)
+                vmin=np.min(v)-1
+    
+                v_scaled=50-49*(v-vmin)/(vmax-vmin)
+    
+                plist=np.vstack((np.array(range(plot_len)), v_scaled))
+    
+                plt.fill(bgcolor)
+                pygame.draw.lines(plt, BLUE, False, np.transpose(plist))
+                screen.blit(plt, (100, 10))
+
             all_neurons.draw(screen)
             for counter, neur in enumerate(all_neurons.sprites()):
                 neur.drawAxons()
-
-            vmax=np.max(v)
-            vmin=np.min(v)-1
-
-            v_scaled=50-49*(v-vmin)/(vmax-vmin)
-
-            plist=np.vstack((np.array(range(plot_len)), v_scaled))
-
-            plt.fill(bgcolor)
-            pygame.draw.lines(plt, BLUE, False, np.transpose(plist))
-            dirty_recs.append(screen.blit(plt, (100, 10)))
             pygame.display.update()
 
-        dirty_recs=[]
+        #dirty_recs=[]
 
 
 
@@ -615,17 +637,17 @@ screen = pygame.display.set_mode((width, height))
 bgcolor = WHITE
 
 screen.fill(WHITE)
-pr = cProfile.Profile()
-pr.enable()
+#pr = cProfile.Profile()
+#pr.enable()
 
 build_loop()
 
-pr.disable()
-s = StringIO.StringIO()
-sortby = 'cumulative'
-ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
-ps.print_stats()
-print s.getvalue()
+#pr.disable()
+#s = StringIO.StringIO()
+#sortby = 'cumulative'
+#ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
+#ps.print_stats()
+#print s.getvalue()
 if RPI:
     io.cleanup()
 pygame.quit()
