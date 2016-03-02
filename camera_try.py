@@ -30,7 +30,7 @@ while going:
     try_array=pygame.surfarray.pixels3d(image)
     try_array[:, :, 0]=try_array[:, :, 2]
     try_array[:, :, 1]=try_array[:, :, 2]
-    scaledDown = pygame.transform.scale(catSurfaceObj, (64, 48))
+    scaledDown = pygame.transform.scale(catSurfaceObj, (320, 240))
 
     scaledUp = pygame.transform.scale(scaledDown, (640, 480))
     windowSurfaceObj.blit(scaledUp,(0,0))

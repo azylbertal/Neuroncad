@@ -1,4 +1,5 @@
 import pygame
+import pygame.camera
 import math
 import pickle
 import neuron
@@ -27,20 +28,26 @@ BLACK = (  0,   0,   0)
 WHITE = (255, 255, 255)
 RED   = (255,   0,   0)
 BLUE  = (0,   0,   255)
-width = 1224
-height = 768
+width = 1300
+height = 710
 
 step=0.1
 
 downSampleFactor=10.
+visualDownSample=500.
 ir_conversion=50.
+visual_conversion=10.
 motors=False
 sensors=False
+visuals=False
+
+cam_width=32.
+cam_height=24.
 
 
 class Neuron(pygame.sprite.Sprite):
     def __init__(self, x, y, tp, shift=True, nid=None):
-        global motors, sensors
+        global motors, sensors, visuals
         super(Neuron, self).__init__()
         if tp == 'excitatory':
             self.image = pygame.image.load("pyramidal.bmp").convert()
@@ -64,6 +71,17 @@ class Neuron(pygame.sprite.Sprite):
             self.image = pygame.image.load("ir_sensor.bmp").convert()
             self.ir_stm=0
             self.super_type='sensor'
+            sensors=True
+        elif tp=='visual':
+            self.ir_stm=0
+            self.image = pygame.image.load("visual.bmp").convert()
+            self.visual_stm=0
+            self.super_type='sensor'
+            visuals=True
+            self.rf=receptiveField()
+            pygame.event.set_allowed([pygame.MOUSEBUTTONDOWN, pygame.MOUSEBUTTONUP, pygame.MOUSEMOTION])
+            
+
 
         self.nid=nid
 
@@ -80,7 +98,7 @@ class Neuron(pygame.sprite.Sprite):
         self.mod=neuron.h.Section()
         if self.super_type=='neuron' or self.super_type=='sensor':
             self.mod.insert('hh')
-            sensors=True
+            
         elif self.super_type=='motor':
             self.mod.insert('pas')
             motors=True
@@ -136,7 +154,7 @@ class Axon():
         #self.rect=0
         self.w=weight
         self.tp=tp
-        if tp=='excitatory' or tp=='irsensor':
+        if tp=='excitatory' or tp=='irsensor' or tp=='visual':
             self.cl=BLUE
             self.syn.e=0.0
         elif tp=='inhibitory':
@@ -213,6 +231,46 @@ def inter(pt1, pt2):
     return int_pts
 
 
+def receptiveField():
+    
+    pixel_width=width/cam_width
+    pixel_height=height/cam_height
+    screen.fill(WHITE)
+    pygame.camera.init()
+    selected=[]
+    cam = pygame.camera.Camera("/dev/video1",(width,height), 'HSV')
+    cam.start()
+
+    #windowSurfaceObj = pygame.display.set_mode((640,480),1,16)
+    #pygame.display.set_caption('Camera')
+    going=True
+    pygame.event.set_blocked(pygame.MOUSEMOTION)
+    
+    while going:
+        event = pygame.event.poll()
+        (x, y)=pygame.mouse.get_pos()
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            xx=int(x/pixel_width)
+            yy=int(y/pixel_height)
+            selected.append((xx, yy))
+        if event.type == pygame.QUIT:
+            going=False
+        image = cam.get_image()
+        catSurfaceObj = image
+        try_array=pygame.surfarray.pixels3d(image)
+        try_array[:, :, 0]=try_array[:, :, 2]
+        try_array[:, :, 1]=try_array[:, :, 2]
+        scaledDown = pygame.transform.scale(catSurfaceObj, (int(cam_width), int(cam_height)))
+
+        scaledUp = pygame.transform.scale(scaledDown, (width, height))
+        screen.blit(scaledUp,(0,0))
+        for sel in selected:
+            poly_points=[[sel[0]*pixel_width, sel[1]*pixel_height], [(sel[0]+1)*pixel_width, sel[1]*pixel_height], [(sel[0]+1)*pixel_width, (sel[1]+1)*pixel_height], [sel[0]*pixel_width, (sel[1]+1)*pixel_height]]
+            pygame.draw.polygon(screen, RED, poly_points)
+        pygame.display.update()
+    cam.stop()
+    return selected
+    
 def build_loop():
 
     all_neurons = pygame.sprite.Group()
@@ -230,29 +288,31 @@ def build_loop():
     buttons.add(excitatory_button)
     inhibitory_button=Button('interneuron.bmp', 90, 10, 'inhibitory')
     buttons.add(inhibitory_button)
+    visual_button=Button('visual.bmp', 180, 10, 'visual')
+    buttons.add(visual_button)
     save_button=Button('save.bmp', 1000, 10)
     buttons.add(save_button)
     load_button=Button('load.bmp', 1050, 10)
     buttons.add(load_button)
 
     if RPI:
-        rightforward_button=Button('rightforward.bmp', 180, 10, 'rightforward')
+        rightforward_button=Button('rightforward.bmp', 270, 10, 'rightforward')
         buttons.add(rightforward_button)
-        rightbackward_button=Button('rightbackward.bmp', 270, 10, 'rightbackward')
+        rightbackward_button=Button('rightbackward.bmp', 360, 10, 'rightbackward')
         buttons.add(rightbackward_button)
-        leftforward_button=Button('leftforward.bmp', 360, 10, 'leftforward')
+        leftforward_button=Button('leftforward.bmp', 450, 10, 'leftforward')
         buttons.add(leftforward_button)
-        leftbackward_button=Button('leftbackward.bmp', 450, 10, 'leftbackward')
+        leftbackward_button=Button('leftbackward.bmp', 540, 10, 'leftbackward')
         buttons.add(leftbackward_button)
-        irsensor_button=Button('ir_sensor.bmp', 540, 10, 'irsensor')
+        irsensor_button=Button('ir_sensor.bmp', 630, 10, 'irsensor')
         buttons.add(irsensor_button)
 
     focus=excitatory_button
 
-    wightbx=eztext.Input(maxlength=6, color=BLUE,x=600, y=10, prompt='Synaptic weight: ')
+    wightbx=eztext.Input(maxlength=6, color=BLUE,x=700, y=10, prompt='Synaptic weight: ')
     wightbx.value='0.05'
     wightbx.focus=True
-
+    pygame.event.set_allowed([pygame.MOUSEBUTTONDOWN, pygame.MOUSEBUTTONUP, pygame.MOUSEMOTION])
     while building:
 
 
@@ -284,6 +344,7 @@ def build_loop():
                     print file_path
                     fl=open(file_path, 'w')
                     info=getNeuronsInfo(all_neurons)
+                    
                     pickle.dump(info, fl)
                     fl.close()
                 elif load_button.rect.collidepoint([x, y]):
@@ -298,6 +359,8 @@ def build_loop():
                     focus=excitatory_button
                 elif inhibitory_button.rect.collidepoint([x, y]):
                     focus=inhibitory_button
+                elif visual_button.rect.collidepoint([x, y]):
+                    focus=visual_button
 
 
                 if RPI:
@@ -317,6 +380,7 @@ def build_loop():
                     for counter, neur in enumerate(all_neurons.sprites()):
                         if neur.rect.collidepoint([x, y]):
                             on_neuron=True
+                            
                     if not on_neuron:
                         all_neurons.add(Neuron(x, y, focus.tp, nid=nid))
                         nid+=1
@@ -400,6 +464,10 @@ def run_loop(all_neurons):
         forward_right_pwm.start(0)
         backward_right_pwm.start(0)
 
+    if visuals:
+        cam = pygame.camera.Camera("/dev/video0",(width,height), 'HSV')
+        cam.start()
+
     sensors_init=0
     vmin=-70.
     vmax=80.
@@ -407,6 +475,7 @@ def run_loop(all_neurons):
     fire_image_delay=100
     running=1
     plot_count=0
+    visual_count=0
     buttons = pygame.sprite.Group()
     downflag=False;
     stop_button=pygame.sprite.Sprite()
@@ -458,13 +527,24 @@ def run_loop(all_neurons):
 
         right_power=0.
         left_power=0.
-
+        
         for counter, neur in enumerate(all_neurons.sprites()):
 
             try:
                 max_v=np.max(np.array(recv[counter]))
             except:
             	max_v=0.
+
+            if visuals:
+                if visual_count==0:
+                    catSurfaceObj = cam.get_image()
+                    scaledDown = pygame.transform.scale(catSurfaceObj, (int(cam_width), int(cam_height)))   
+                    pixArray=pygame.surfarray.pixels3d(scaledDown)[:,:,2]
+                    visual_count+=1
+                visual_count+=1
+                if visual_count==visualDownSample+1:
+                    visual_count=0
+                    
 
             if neur.tp=='irsensor' and sensors_init==500:
                 ir_range=ReadChannel(0)
@@ -473,6 +553,15 @@ def run_loop(all_neurons):
                 neur.ir_stm.dur=step
                 neur.ir_stm.amp=ir_range/ir_conversion
 
+            if neur.tp=='visual':
+                neur.ir_stm=neuron.h.IClamp(neur.mod(0.5))
+                neur.ir_stm.delay=neuron.h.t
+                neur.ir_stm.dur=step
+                vamp=0
+                for c in neur.rf:
+                    vamp+=pixArray[c[0], c[1]]
+                vamp/=len(neur.rf)
+                neur.ir_stm.amp=vamp/visual_conversion
             if neur.super_type=='motor':
                 try:
                     mean_v=5*(70+np.mean(np.array(recv[counter])))
@@ -537,6 +626,8 @@ def run_loop(all_neurons):
         event = pygame.event.poll()
         (x, y)=pygame.mouse.get_pos()
         if event.type == pygame.QUIT:
+            if visuals:
+                cam.stop()
             return 0
 
         if event.type == pygame.MOUSEBUTTONDOWN:
@@ -553,7 +644,8 @@ def run_loop(all_neurons):
 
             if stop_button.rect.collidepoint([x, y]):
 
-
+                if visuals:
+                    cam.stop()
                 return 0
             for counter, neur in enumerate(all_neurons.sprites()):
                 if neur.rect.collidepoint([x, y]):
@@ -562,7 +654,7 @@ def run_loop(all_neurons):
                         stm.delay=neuron.h.t#+step
                         stm.dur=10
                         stm.amp=10
-                    if mouse_buttons[1]:
+                    if mouse_buttons[2]:
                         rec_neuron=neur
                         pygame.draw.rect(screen, bgcolor, pipette.rect)
                         pipette.rect.x=x
