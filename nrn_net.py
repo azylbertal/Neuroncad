@@ -250,7 +250,7 @@ def build_loop():
     focus=excitatory_button
 
     wightbx=eztext.Input(maxlength=6, color=BLUE,x=600, y=10, prompt='Synaptic weight: ')
-    wightbx.value='0.1'
+    wightbx.value='0.05'
     wightbx.focus=True
 
     while building:
