@@ -157,7 +157,6 @@ class Axon():
 
         self.start_id=start_id
         self.end_id=end_id
-
         if interp:
             self.points=[]
             for p in range(len(points)-1):
@@ -226,7 +225,6 @@ def setNeuronsInfo(inf):
                         end_nrn=neur
 
                 start_nrn.axons.append(Axon(start_nrn, end_nrn, paxon['points'], start_nrn.tp, paxon['weight'], paxon['start'], paxon['end'], interp=False))
-
     return all_neurons
 
 
@@ -345,7 +343,26 @@ def build_loop():
             return 0
 
         if event.type == pygame.MOUSEBUTTONDOWN:
-            downflag=True;
+            mouse_buttons=pygame.mouse.get_pressed()
+            if mouse_buttons[0]:            
+                downflag=True;
+            if mouse_buttons[2]:
+                for neur in all_neurons.sprites():
+                    if neur.rect.collidepoint([x, y]):
+                        for n in all_neurons.sprites():
+                            to_remove=[]
+                            for ax in n.axons:
+                                print ax.end_id                                
+                                if ax.end_id==neur.nid:
+                                    del ax.con
+                                    del ax.syn
+                                    to_remove.append(ax)
+                            for ax in to_remove:
+                                n.axons.remove(ax)
+                                   
+                        all_neurons.remove(neur)
+                        del neur
+                            
         if event.type == pygame.MOUSEMOTION:
             if downflag:
                 drawing=True;
@@ -355,86 +372,85 @@ def build_loop():
                 #
 
         if event.type == pygame.MOUSEBUTTONUP:
-
-            if not drawing:
-
-                if run_button.rect.collidepoint([x, y]):
-                    run_loop()
-                elif exit_button.rect.collidepoint([x, y]):
-                    return 0
-                elif save_button.rect.collidepoint([x, y]):
-                    file_path = tkFileDialog.asksaveasfilename()
-                    print file_path
-                    fl=open(file_path, 'w')
-                    info=getNeuronsInfo()
-                    
-                    pickle.dump(info, fl)
-                    fl.close()
-                elif load_button.rect.collidepoint([x, y]):
-                    file_path = tkFileDialog.askopenfilename()
-                    fl=open(file_path, 'r')
-                    inf=pickle.load(fl)
-                    all_neurons=setNeuronsInfo(inf)
-                    fl.close()
-
-
-                elif excitatory_button.rect.collidepoint([x, y]):
-                    focus=excitatory_button
-                elif inhibitory_button.rect.collidepoint([x, y]):
-                    focus=inhibitory_button
-                elif visual_button.rect.collidepoint([x, y]):
-                    focus=visual_button
-
-
-                if RPI:
-                    if rightforward_button.rect.collidepoint([x, y]):
-                        focus=rightforward_button
-                    elif rightbackward_button.rect.collidepoint([x, y]):
-                        focus=rightbackward_button
-                    elif leftforward_button.rect.collidepoint([x, y]):
-                        focus=leftforward_button
-                    elif leftbackward_button.rect.collidepoint([x, y]):
-                        focus=leftbackward_button
-                    elif irsensor_button.rect.collidepoint([x, y]):
-                        focus=irsensor_button
-
-                if y>150 and y<height-100:
-                    on_neuron=False
+            if mouse_buttons[0]:
+                if not drawing:
+    
+                    if run_button.rect.collidepoint([x, y]):
+                        run_loop()
+                    elif exit_button.rect.collidepoint([x, y]):
+                        return 0
+                    elif save_button.rect.collidepoint([x, y]):
+                        file_path = tkFileDialog.asksaveasfilename()
+                        print file_path
+                        fl=open(file_path, 'w')
+                        info=getNeuronsInfo()
+                        
+                        pickle.dump(info, fl)
+                        fl.close()
+                    elif load_button.rect.collidepoint([x, y]):
+                        file_path = tkFileDialog.askopenfilename()
+                        fl=open(file_path, 'r')
+                        inf=pickle.load(fl)
+                        all_neurons=setNeuronsInfo(inf)
+                        fl.close()
+    
+    
+                    elif excitatory_button.rect.collidepoint([x, y]):
+                        focus=excitatory_button
+                    elif inhibitory_button.rect.collidepoint([x, y]):
+                        focus=inhibitory_button
+                    elif visual_button.rect.collidepoint([x, y]):
+                        focus=visual_button
+    
+    
+                    if RPI:
+                        if rightforward_button.rect.collidepoint([x, y]):
+                            focus=rightforward_button
+                        elif rightbackward_button.rect.collidepoint([x, y]):
+                            focus=rightbackward_button
+                        elif leftforward_button.rect.collidepoint([x, y]):
+                            focus=leftforward_button
+                        elif leftbackward_button.rect.collidepoint([x, y]):
+                            focus=leftbackward_button
+                        elif irsensor_button.rect.collidepoint([x, y]):
+                            focus=irsensor_button
+    
+                    if y>150 and y<height-100:
+                        on_neuron=False
+                        for counter, neur in enumerate(all_neurons.sprites()):
+                            if neur.rect.collidepoint([x, y]):
+                                on_neuron=True
+                                
+                        if not on_neuron:
+                            all_neurons.add(Neuron(x, y, focus.tp, nid=nid))
+                            nid+=1
+    
+    
+    
+    
+                else:
+                    axon_start=False
+                    axon_end=False
                     for counter, neur in enumerate(all_neurons.sprites()):
-                        if neur.rect.collidepoint([x, y]):
-                            on_neuron=True
-                            
-                    if not on_neuron:
-                        all_neurons.add(Neuron(x, y, focus.tp, nid=nid))
-                        nid+=1
-
-
-
-
-            else:
-                axon_start=False
-                axon_end=False
-                for counter, neur in enumerate(all_neurons.sprites()):
-                    if neur.rect.collidepoint(pts[0]) and not neur.super_type=='motor':
-                        start_nrn=counter
-                        axon_start=True;
-                    if neur.rect.collidepoint(pts[len(pts)-1]):
-                        end_nrn=counter
-                        axon_end=True;
-
-                if (axon_start and axon_end):
-                    tp=all_neurons.sprites()[start_nrn].tp
-                    w=float(wightbx.value)
-                    start_id=all_neurons.sprites()[start_nrn].nid
-                    end_id=all_neurons.sprites()[end_nrn].nid
-                    all_neurons.sprites()[start_nrn].axons.append(Axon(all_neurons.sprites()[start_nrn], all_neurons.sprites()[end_nrn], pts, tp, w, start_id, end_id))
-
-
-                pts=[]
-                drawing=False;
-
-
-            downflag=False;
+                        if neur.rect.collidepoint(pts[0]) and not neur.super_type=='motor':
+                            start_nrn=counter
+                            axon_start=True;
+                        if neur.rect.collidepoint(pts[len(pts)-1]):
+                            end_nrn=counter
+                            axon_end=True;
+    
+                    if (axon_start and axon_end):
+                        tp=all_neurons.sprites()[start_nrn].tp
+                        w=float(wightbx.value)
+                        start_id=all_neurons.sprites()[start_nrn].nid
+                        end_id=all_neurons.sprites()[end_nrn].nid
+                        all_neurons.sprites()[start_nrn].axons.append(Axon(all_neurons.sprites()[start_nrn], all_neurons.sprites()[end_nrn], pts, tp, w, start_id, end_id))
+    
+                    pts=[]
+                    drawing=False;
+    
+    
+                downflag=False;
 
         if drawing:
 
@@ -732,7 +748,7 @@ def run_loop():
                 APs.remove(ap)
 
 
-        neuron.h.continuerun(t)
+        neuron.run(t)
         t+=step
 #        if plot_count==downSampleFactor:
 #            v=np.append(v[1::], [np.array(all_neurons.sprites()[0].mod(0.5).v)])
