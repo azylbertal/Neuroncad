@@ -7,6 +7,8 @@ import Tkinter as tk
 import tkFileDialog
 #import matplotlib.pyplot as plt
 import numpy as np
+import os
+import copy
 #import cProfile, pstats, StringIO
 #from time import sleep
 import eztext
@@ -33,6 +35,8 @@ height = 710
 
 step=0.1
 
+all_neurons = pygame.sprite.Group()
+
 downSampleFactor=10.
 visualDownSample=500.
 ir_conversion=50.
@@ -41,8 +45,10 @@ motors=False
 sensors=False
 visuals=False
 
+cam_dev="/dev/video0"
 cam_width=32.
 cam_height=24.
+cam_scale=8
 
 
 class Neuron(pygame.sprite.Sprite):
@@ -183,11 +189,11 @@ class AP():
 
 
 
-def getNeuronsInfo(nrns):
+def getNeuronsInfo():
 
     neurons=[]
 
-    for counter, neur in enumerate(nrns.sprites()):
+    for counter, neur in enumerate(all_neurons.sprites()):
 
         neurons+=[pickledNeuron(neur)]
 
@@ -238,7 +244,8 @@ def receptiveField():
     screen.fill(WHITE)
     pygame.camera.init()
     selected=[]
-    cam = pygame.camera.Camera("/dev/video1",(width,height), 'HSV')
+    os.system('v4l2-ctl -d '+cam_dev+ ' --set-ctrl exposure_auto=1')
+    cam = pygame.camera.Camera(cam_dev,(width,height), 'HSV')
     cam.start()
 
     #windowSurfaceObj = pygame.display.set_mode((640,480),1,16)
@@ -263,6 +270,12 @@ def receptiveField():
         scaledDown = pygame.transform.scale(catSurfaceObj, (int(cam_width), int(cam_height)))
 
         scaledUp = pygame.transform.scale(scaledDown, (width, height))
+        for neur in all_neurons.sprites():
+            if neur.tp=='visual':
+                for c in neur.rf:
+                    poly_points=[[c[0]*pixel_width, c[1]*pixel_height], [(c[0]+1)*pixel_width, c[1]*pixel_height], [(c[0]+1)*pixel_width, (c[1]+1)*pixel_height], [c[0]*pixel_width, (c[1]+1)*pixel_height]]
+                    cl=(int(255/(neur.nid+1)), 255-int(255/(neur.nid+1)), 255)
+                    pygame.draw.polygon(scaledUp, cl, poly_points, 1)
         screen.blit(scaledUp,(0,0))
         for sel in selected:
             poly_points=[[sel[0]*pixel_width, sel[1]*pixel_height], [(sel[0]+1)*pixel_width, sel[1]*pixel_height], [(sel[0]+1)*pixel_width, (sel[1]+1)*pixel_height], [sel[0]*pixel_width, (sel[1]+1)*pixel_height]]
@@ -273,7 +286,8 @@ def receptiveField():
     
 def build_loop():
 
-    all_neurons = pygame.sprite.Group()
+    global all_neurons
+    
     buttons = pygame.sprite.Group()
     drawing=False;
     downflag=False;
@@ -336,14 +350,14 @@ def build_loop():
             if not drawing:
 
                 if run_button.rect.collidepoint([x, y]):
-                    run_loop(all_neurons)
+                    run_loop()
                 elif exit_button.rect.collidepoint([x, y]):
                     return 0
                 elif save_button.rect.collidepoint([x, y]):
                     file_path = tkFileDialog.asksaveasfilename()
                     print file_path
                     fl=open(file_path, 'w')
-                    info=getNeuronsInfo(all_neurons)
+                    info=getNeuronsInfo()
                     
                     pickle.dump(info, fl)
                     fl.close()
@@ -439,7 +453,7 @@ def build_loop():
 
         pygame.display.flip()
 
-def run_loop(all_neurons):
+def run_loop():
 
     global motors
 
@@ -521,6 +535,8 @@ def run_loop(all_neurons):
         neur.drawAxons()
 
     pygame.display.flip()
+    pixel_width=cam_scale
+    pixel_height=cam_scale
     while running:
         if sensors_init<500:
 		sensors_init+=1
@@ -528,6 +544,33 @@ def run_loop(all_neurons):
         right_power=0.
         left_power=0.
         
+        if visuals:
+            if visual_count==0:
+                catSurfaceObj = cam.get_image()
+                scaledDown = pygame.transform.scale(catSurfaceObj, (int(cam_width), int(cam_height)))   
+                pixArray=pygame.surfarray.pixels3d(scaledDown)
+                                    
+                pixArray[:, :, 0]=pixArray[:, :, 2]
+                pixArray[:, :, 1]=pixArray[:, :, 2]
+                my_array=copy.deepcopy(pixArray[:,:,2])
+                del pixArray
+                scaledUp = pygame.transform.scale(scaledDown, (int(cam_width*cam_scale), int(cam_height*cam_scale)))
+                
+                pygame.draw.rect(scaledUp, BLACK, scaledUp.get_rect(), 1)
+                for neur in all_neurons.sprites():
+                    if neur.tp=='visual':
+                        for c in neur.rf:
+                            poly_points=[[c[0]*pixel_width, c[1]*pixel_height], [(c[0]+1)*pixel_width, c[1]*pixel_height], [(c[0]+1)*pixel_width, (c[1]+1)*pixel_height], [c[0]*pixel_width, (c[1]+1)*pixel_height]]
+                            cl=(int(255/(neur.nid+1)), 255-int(255/(neur.nid+1)), 255)
+                            pygame.draw.polygon(scaledUp, cl, poly_points, 1)
+                            pygame.draw.rect(screen, cl, neur.rect, 1)
+                            
+                screen.blit(scaledUp, (width-(cam_width*cam_scale+10), height-(cam_width*cam_scale+50)))
+                visual_count+=1
+            visual_count+=1
+            if visual_count==visualDownSample+1:
+                visual_count=0
+            
         for counter, neur in enumerate(all_neurons.sprites()):
 
             try:
@@ -535,15 +578,6 @@ def run_loop(all_neurons):
             except:
             	max_v=0.
 
-            if visuals:
-                if visual_count==0:
-                    catSurfaceObj = cam.get_image()
-                    scaledDown = pygame.transform.scale(catSurfaceObj, (int(cam_width), int(cam_height)))   
-                    pixArray=pygame.surfarray.pixels3d(scaledDown)[:,:,2]
-                    visual_count+=1
-                visual_count+=1
-                if visual_count==visualDownSample+1:
-                    visual_count=0
                     
 
             if neur.tp=='irsensor' and sensors_init==500:
@@ -558,10 +592,13 @@ def run_loop(all_neurons):
                 neur.ir_stm.delay=neuron.h.t
                 neur.ir_stm.dur=step
                 vamp=0
+                
                 for c in neur.rf:
-                    vamp+=pixArray[c[0], c[1]]
+                    vamp+=my_array[c[0], c[1]]
                 vamp/=len(neur.rf)
                 neur.ir_stm.amp=vamp/visual_conversion
+                
+                    
             if neur.super_type=='motor':
                 try:
                     mean_v=5*(70+np.mean(np.array(recv[counter])))
