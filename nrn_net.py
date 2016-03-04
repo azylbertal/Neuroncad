@@ -25,6 +25,12 @@ if RPI:
     io.setmode(io.BCM)
     spi = spidev.SpiDev()
     spi.open(0, 0)
+    downSampleFactor=40.
+    visualDwonSample=100.
+
+else:
+    downSampleFactor=10.
+    visualDownSample=100.
 
 BLACK = (  0,   0,   0)
 WHITE = (255, 255, 255)
@@ -37,8 +43,6 @@ step=0.1
 
 all_neurons = pygame.sprite.Group()
 
-downSampleFactor=10.
-visualDownSample=500.
 ir_conversion=50.
 visual_conversion=10.
 motors=False
@@ -328,7 +332,7 @@ def build_loop():
 
     focus=excitatory_button
 
-    wightbx=eztext.Input(maxlength=6, color=BLUE,x=700, y=10, prompt='Synaptic weight: ')
+    wightbx=eztext.Input(maxlength=6, color=BLUE,x=800, y=10, prompt='Synaptic weight: ')
     wightbx.value='0.05'
     wightbx.focus=True
     pygame.event.set_allowed([pygame.MOUSEBUTTONDOWN, pygame.MOUSEBUTTONUP, pygame.MOUSEMOTION])
