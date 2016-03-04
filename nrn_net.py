@@ -52,9 +52,10 @@ cam_scale=8
 
 
 class Neuron(pygame.sprite.Sprite):
-    def __init__(self, x, y, tp, shift=True, nid=None):
+    def __init__(self, x, y, tp, shift=True, nid=None, rf=None):
         global motors, sensors, visuals
         super(Neuron, self).__init__()
+        self.rf=0
         if tp == 'excitatory':
             self.image = pygame.image.load("pyramidal.bmp").convert()
             self.super_type='neuron'
@@ -83,9 +84,13 @@ class Neuron(pygame.sprite.Sprite):
             self.image = pygame.image.load("visual.bmp").convert()
             self.visual_stm=0
             self.super_type='sensor'
+            pygame.camera.init()
             visuals=True
-            self.rf=receptiveField()
-            pygame.event.set_allowed([pygame.MOUSEBUTTONDOWN, pygame.MOUSEBUTTONUP, pygame.MOUSEMOTION])
+            if rf==None:
+                self.rf=receptiveField()
+                pygame.event.set_allowed([pygame.MOUSEBUTTONDOWN, pygame.MOUSEBUTTONUP, pygame.MOUSEMOTION])
+            else:
+                self.rf=rf
             
 
 
@@ -129,6 +134,7 @@ class pickledNeuron():
         self.tp=nrn.tp
         self.super_type=nrn.super_type
         self.nid=nrn.nid
+        self.rf=nrn.rf
         self.axons=nrn.pickledAxons()
 
 class Button(pygame.sprite.Sprite):
@@ -203,7 +209,7 @@ def setNeuronsInfo(inf):
     all_neurons = pygame.sprite.Group()
 
     for counter, neur in enumerate(inf):
-        nrn=Neuron(neur.rect.x, neur.rect.y, neur.tp, shift=False, nid=neur.nid)
+        nrn=Neuron(neur.rect.x, neur.rect.y, neur.tp, shift=False, nid=neur.nid, rf=neur.rf)
         all_neurons.add(nrn)
 #rev_list=reversed(all_neurons.sprites())
     for counter, neur in enumerate(inf):
@@ -242,7 +248,6 @@ def receptiveField():
     pixel_width=width/cam_width
     pixel_height=height/cam_height
     screen.fill(WHITE)
-    pygame.camera.init()
     selected=[]
     os.system('v4l2-ctl -d '+cam_dev+ ' --set-ctrl exposure_auto=1')
     cam = pygame.camera.Camera(cam_dev,(width,height), 'HSV')
@@ -483,9 +488,10 @@ def run_loop():
         cam.start()
 
     sensors_init=0
-    vmin=-70.
-    vmax=80.
-    plot_len=300
+    vmin=-75.
+    vmax=-40.
+    plot_len=400
+    plot_height=100
     fire_image_delay=100
     running=1
     plot_count=0
@@ -507,7 +513,7 @@ def run_loop():
     #firing_neuron_image.set_colorkey(WHITE)
     #neuron_image=pygame.image.load("neuron.bmp").convert()
     #neuron_image.set_colorkey(WHITE)
-    plt=pygame.Surface((plot_len, 50))
+    plt=pygame.Surface((plot_len, plot_height))
 
     APs=[]
     recv=[]
@@ -732,11 +738,12 @@ def run_loop():
             plot_count=0
             if recording:            
                 v=np.append(v[1::], [np.array(rec_neuron.mod(0.5).v)])
-                vmax=np.max(v)
-                vmin=np.min(v)-1
+                #vmax=np.max(v)
+                #vmin=np.min(v)-1
     
-                v_scaled=50-49*(v-vmin)/(vmax-vmin)
-    
+                v_scaled=plot_height-(plot_height)*(v-vmin)/(vmax-vmin)
+                v_scaled[(v_scaled<0)]=0                
+                    
                 plist=np.vstack((np.array(range(plot_len)), v_scaled))
     
                 plt.fill(bgcolor)
