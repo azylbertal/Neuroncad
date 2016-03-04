@@ -352,7 +352,6 @@ def build_loop():
                         for n in all_neurons.sprites():
                             to_remove=[]
                             for ax in n.axons:
-                                print ax.end_id                                
                                 if ax.end_id==neur.nid:
                                     del ax.con
                                     del ax.syn
@@ -381,7 +380,6 @@ def build_loop():
                         return 0
                     elif save_button.rect.collidepoint([x, y]):
                         file_path = tkFileDialog.asksaveasfilename()
-                        print file_path
                         fl=open(file_path, 'w')
                         info=getNeuronsInfo()
                         
