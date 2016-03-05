@@ -252,8 +252,13 @@ def receptiveField():
     screen.fill(WHITE)
     selected=[]
     os.system('v4l2-ctl -d '+cam_dev+ ' --set-ctrl exposure_auto=1')
-    cam = pygame.camera.Camera(cam_dev,(width,height), 'HSV')
-    cam.start()
+    try:
+        cam = pygame.camera.Camera(cam_dev,(width,height), 'HSV')
+        cam.start()
+        camera=True
+    except:
+        camera=False
+            
 
     #windowSurfaceObj = pygame.display.set_mode((640,480),1,16)
     #pygame.display.set_caption('Camera')
@@ -269,14 +274,18 @@ def receptiveField():
             selected.append((xx, yy))
         if event.type == pygame.QUIT:
             going=False
-        image = cam.get_image()
-        catSurfaceObj = image
-        try_array=pygame.surfarray.pixels3d(image)
-        try_array[:, :, 0]=try_array[:, :, 2]
-        try_array[:, :, 1]=try_array[:, :, 2]
-        scaledDown = pygame.transform.scale(catSurfaceObj, (int(cam_width), int(cam_height)))
-
-        scaledUp = pygame.transform.scale(scaledDown, (width, height))
+        if camera:
+            image = cam.get_image()
+            catSurfaceObj = image
+            try_array=pygame.surfarray.pixels3d(image)
+            try_array[:, :, 0]=try_array[:, :, 2]
+            try_array[:, :, 1]=try_array[:, :, 2]
+            scaledDown = pygame.transform.scale(catSurfaceObj, (int(cam_width), int(cam_height)))
+    
+            scaledUp = pygame.transform.scale(scaledDown, (width, height))
+        else:
+            scaledUp = pygame.Surface((width, height))
+            scaledUp.fill(bgcolor)
         for neur in all_neurons.sprites():
             if neur.tp=='visual':
                 for c in neur.rf:
@@ -288,7 +297,8 @@ def receptiveField():
             poly_points=[[sel[0]*pixel_width, sel[1]*pixel_height], [(sel[0]+1)*pixel_width, sel[1]*pixel_height], [(sel[0]+1)*pixel_width, (sel[1]+1)*pixel_height], [sel[0]*pixel_width, (sel[1]+1)*pixel_height]]
             pygame.draw.polygon(screen, RED, poly_points)
         pygame.display.update()
-    cam.stop()
+    if camera:
+        cam.stop()
     return selected
     
 def build_loop():
@@ -311,22 +321,22 @@ def build_loop():
     buttons.add(inhibitory_button)
     visual_button=Button('visual.bmp', 180, 10, 'visual')
     buttons.add(visual_button)
-    save_button=Button('save.bmp', 1000, 10)
+    save_button=Button('save.bmp', 1100, 10)
     buttons.add(save_button)
-    load_button=Button('load.bmp', 1050, 10)
+    load_button=Button('load.bmp', 1150, 10)
     buttons.add(load_button)
 
-    if RPI:
-        rightforward_button=Button('rightforward.bmp', 270, 10, 'rightforward')
-        buttons.add(rightforward_button)
-        rightbackward_button=Button('rightbackward.bmp', 360, 10, 'rightbackward')
-        buttons.add(rightbackward_button)
-        leftforward_button=Button('leftforward.bmp', 450, 10, 'leftforward')
-        buttons.add(leftforward_button)
-        leftbackward_button=Button('leftbackward.bmp', 540, 10, 'leftbackward')
-        buttons.add(leftbackward_button)
-        irsensor_button=Button('ir_sensor.bmp', 630, 10, 'irsensor')
-        buttons.add(irsensor_button)
+    #if RPI:
+    irsensor_button=Button('ir_sensor.bmp', 270, 10, 'irsensor')
+    buttons.add(irsensor_button)
+    rightforward_button=Button('rightforward.bmp', 360, 10, 'rightforward')
+    buttons.add(rightforward_button)
+    rightbackward_button=Button('rightbackward.bmp', 450, 10, 'rightbackward')
+    buttons.add(rightbackward_button)
+    leftforward_button=Button('leftforward.bmp', 540, 10, 'leftforward')
+    buttons.add(leftforward_button)
+    leftbackward_button=Button('leftbackward.bmp', 630, 10, 'leftbackward')
+    buttons.add(leftbackward_button)
 
     focus=excitatory_button
 
@@ -401,17 +411,17 @@ def build_loop():
                         focus=visual_button
     
     
-                    if RPI:
-                        if rightforward_button.rect.collidepoint([x, y]):
-                            focus=rightforward_button
-                        elif rightbackward_button.rect.collidepoint([x, y]):
-                            focus=rightbackward_button
-                        elif leftforward_button.rect.collidepoint([x, y]):
-                            focus=leftforward_button
-                        elif leftbackward_button.rect.collidepoint([x, y]):
-                            focus=leftbackward_button
-                        elif irsensor_button.rect.collidepoint([x, y]):
-                            focus=irsensor_button
+#                    if RPI:
+                    if rightforward_button.rect.collidepoint([x, y]):
+                        focus=rightforward_button
+                    elif rightbackward_button.rect.collidepoint([x, y]):
+                        focus=rightbackward_button
+                    elif leftforward_button.rect.collidepoint([x, y]):
+                        focus=leftforward_button
+                    elif leftbackward_button.rect.collidepoint([x, y]):
+                        focus=leftbackward_button
+                    elif irsensor_button.rect.collidepoint([x, y]):
+                        focus=irsensor_button
     
                     if y>150 and y<height-100:
                         on_neuron=False
