@@ -56,7 +56,7 @@ motors=False
 sensors=False
 visuals=False
 
-cam_dev="/dev/video0"
+cam_dev="/dev/video1"
 cam_width=32.
 cam_height=24.
 cam_scale=8
@@ -521,7 +521,7 @@ def run_loop():
         backward_right_pwm.start(0)
 
     if visuals:
-        cam = pygame.camera.Camera("/dev/video0",(width,height), 'HSV')
+        cam = pygame.camera.Camera(cam_dev,(width,height), 'HSV')
         cam.start()
         os.system('v4l2-ctl -d '+cam_dev+ ' --set-ctrl exposure_auto=1')
 
