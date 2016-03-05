@@ -26,7 +26,7 @@ if RPI:
     spi = spidev.SpiDev()
     spi.open(0, 0)
     downSampleFactor=40.
-    visualDwonSample=100.
+    visualDownSample=100.
 
 else:
     downSampleFactor=10.
