@@ -251,10 +251,11 @@ def receptiveField():
     pixel_height=height/cam_height
     screen.fill(WHITE)
     selected=[]
-    os.system('v4l2-ctl -d '+cam_dev+ ' --set-ctrl exposure_auto=1')
+    
     try:
         cam = pygame.camera.Camera(cam_dev,(width,height), 'HSV')
         cam.start()
+        os.system('v4l2-ctl -d '+cam_dev+ ' --set-ctrl exposure_auto=1')
         camera=True
     except:
         camera=False
@@ -514,6 +515,7 @@ def run_loop():
     if visuals:
         cam = pygame.camera.Camera("/dev/video0",(width,height), 'HSV')
         cam.start()
+        os.system('v4l2-ctl -d '+cam_dev+ ' --set-ctrl exposure_auto=1')
 
     sensors_init=0
     vmin=-75.
