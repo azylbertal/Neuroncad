@@ -41,6 +41,13 @@ height = 710
 
 step=0.1
 
+try:
+    pygame.mixer.init()
+    spike_sound=pygame.mixer.Sound("spike.wav")
+    sound_card=True
+except:
+    sound_card=False
+        
 all_neurons = pygame.sprite.Group()
 
 ir_conversion=50.
@@ -651,10 +658,13 @@ def run_loop():
                 elif neur.tp=='leftbackward':
                     left_power-=mean_v
 
-            if not neur.super_type=='motor' and max_v>25.0 and neur.fire_counter==0:
-                neur.fire_counter=fire_image_delay
+            if not neur.super_type=='motor' and max_v>25.0: #and neur.fire_counter==0:
+                #neur.fire_counter=fire_image_delay
                 #neur.image=firing_neuron_image
                 #dirty_recs.append(neur.rect)
+                if recording:                
+                    if sound_card and neur==rec_neuron:
+                        spike_sound.play()
                 for ax in neur.axons:
                     APs.append(AP(ax))
 
