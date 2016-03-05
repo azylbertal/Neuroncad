@@ -637,7 +637,7 @@ def run_loop():
                     
             if neur.super_type=='motor':
                 try:
-                    mean_v=5*(70+np.mean(np.array(recv[counter])))
+                    mean_v=20*(70+np.mean(np.array(recv[counter])))
                 except:
                     mean_v=0.
 
