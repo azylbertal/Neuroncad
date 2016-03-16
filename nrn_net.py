@@ -191,15 +191,24 @@ class AP():
     def __init__(self, axon):
         self.axon=axon
         self.pos=0
-    def draw_and_advance(self):
+	self.old_pos=0
+    
+    
+    def draw_and_advance(self, to_draw):
         #oldc1=pygame.draw.circle(screen, bgcolor, [int(p) for p in self.axon.points[self.pos]], 5)
-        oldc=pygame.draw.circle(screen, WHITE, [int(p) for p in self.axon.points[self.pos]], 7)
-        #old_line=pygame.draw.line(screen, BLUE, [int(p) for p in self.axon.points[self.pos]], [int(pp) for pp in self.axon.points[self.pos+1]], 6)
         self.pos+=1
-        newc=pygame.draw.circle(screen, self.axon.cl, [int(p) for p in self.axon.points[self.pos]], 7)
-        return [oldc, newc]
+	if to_draw:
+		oldc=pygame.draw.circle(screen, WHITE, map(int, self.axon.points[self.old_pos]), 7)
+        #old_line=pygame.draw.line(screen, BLUE, [int(p) for p in self.axon.points[self.pos]], [int(pp) for pp in self.axon.points[self.pos+1]], 6)
+        
+        	newc=pygame.draw.circle(screen, self.axon.cl, map(int, self.axon.points[self.pos]), 7)
+		self.old_pos=self.pos
+        	return [oldc, newc]
+	else:
+		return []
+
     def clear(self):
-        return [pygame.draw.circle(screen, WHITE, [int(p) for p in self.axon.points[self.pos]], 7)]
+        return [pygame.draw.circle(screen, WHITE, [int(p) for p in self.axon.points[self.old_pos]], 7)]
 
 
 
@@ -496,6 +505,7 @@ def build_loop():
 
         pygame.display.flip()
 
+
 def run_loop():
 
     global motors
@@ -531,7 +541,7 @@ def run_loop():
     vmax=-40.
     plot_len=400
     plot_height=100
-    fire_image_delay=100
+    fire_image_delay=10
     running=1
     plot_count=0
     visual_count=0
@@ -621,7 +631,7 @@ def run_loop():
         for counter, neur in enumerate(all_neurons.sprites()):
 
             try:
-                max_v=np.max(np.array(recv[counter]))
+                max_v=recv[counter].max()
             except:
             	max_v=0.
 
@@ -661,14 +671,15 @@ def run_loop():
                 elif neur.tp=='leftbackward':
                     left_power-=mean_v
 
-            if not neur.super_type=='motor' and max_v>10.0: #and neur.fire_counter==0:
-                #neur.fire_counter=fire_image_delay
+            if not neur.super_type=='motor' and max_v>25.0 and neur.fire_counter==0:
+                neur.fire_counter=fire_image_delay
                 #neur.image=firing_neuron_image
                 #dirty_recs.append(neur.rect)
                 if recording:                
                     if sound_card and neur==rec_neuron:
                         spike_sound.play()
                 for ax in neur.axons:
+			
                     APs.append(AP(ax))
 
             if neur.fire_counter>0:
@@ -763,9 +774,11 @@ def run_loop():
             #dirty_recs.append(neur.rect)
             recv[counter].resize(0)
 
+	to_draw=plot_count==downSampleFactor
+
         for ap in APs:
             #dirty_recs+=
-            ap.draw_and_advance()
+            ap.draw_and_advance(to_draw)
             if ap.pos==(ap.axon.len-1):
                 #dirty_recs+=ap.clear()
                 ap.clear()
