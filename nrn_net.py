@@ -26,11 +26,9 @@ if RPI:
     spi = spidev.SpiDev()
     spi.open(0, 0)
     downSampleFactor=40.
-    visualDownSample=40.
 
 else:
-    downSampleFactor=10.
-    visualDownSample=100.
+    downSampleFactor=20.
 
 BLACK = (  0,   0,   0)
 WHITE = (255, 255, 255)
@@ -51,12 +49,12 @@ except:
 all_neurons = pygame.sprite.Group()
 
 ir_conversion=50.
-visual_conversion=10.
+visual_conversion=7.
 motors=False
 sensors=False
 visuals=False
 
-cam_dev="/dev/video1"
+cam_dev="/dev/video0"
 cam_width=32.
 cam_height=24.
 cam_scale=8
@@ -263,6 +261,8 @@ def receptiveField():
         cam = pygame.camera.Camera(cam_dev,(width,height), 'HSV')
         cam.start()
         os.system('v4l2-ctl -d '+cam_dev+ ' --set-ctrl exposure_auto=1')
+        os.system('v4l2-ctl -d '+cam_dev+ ' --set-ctrl exposure_absolute=10')
+        
         camera=True
     except:
         camera=False
@@ -288,6 +288,7 @@ def receptiveField():
             try_array=pygame.surfarray.pixels3d(image)
             try_array[:, :, 0]=try_array[:, :, 2]
             try_array[:, :, 1]=try_array[:, :, 2]
+            
             scaledDown = pygame.transform.scale(catSurfaceObj, (int(cam_width), int(cam_height)))
 
             scaledUp = pygame.transform.scale(scaledDown, (width, height))
@@ -329,9 +330,9 @@ def build_loop():
     buttons.add(inhibitory_button)
     visual_button=Button('visual.bmp', 180, 10, 'visual')
     buttons.add(visual_button)
-    save_button=Button('save.bmp', 1100, 10)
+    save_button=Button('save.bmp', width-100, 10)
     buttons.add(save_button)
-    load_button=Button('load.bmp', 1150, 10)
+    load_button=Button('load.bmp', width-50, 10)
     buttons.add(load_button)
 
     #if RPI:
@@ -348,8 +349,8 @@ def build_loop():
 
     focus=excitatory_button
 
-    wightbx=eztext.Input(maxlength=6, color=BLUE,x=800, y=10, prompt='Synaptic weight: ')
-    wightbx.value='0.05'
+    wightbx=eztext.Input(maxlength=6, color=BLUE,x=width-500, y=50, prompt='Synaptic weight: ')
+    wightbx.value='0.1'
     wightbx.focus=True
     pygame.event.set_allowed([pygame.MOUSEBUTTONDOWN, pygame.MOUSEBUTTONUP, pygame.MOUSEMOTION])
     while building:
@@ -498,7 +499,7 @@ def build_loop():
 def run_loop():
 
     global motors
-
+    
     if motors:
         forward_left=17
         backward_left=18
@@ -581,7 +582,9 @@ def run_loop():
     pygame.display.flip()
     pixel_width=cam_scale
     pixel_height=cam_scale
+    my_array=np.zeros((cam_width, cam_height))
     while running:
+        plot_count+=1
         if sensors_init<500:
 		sensors_init+=1
 
@@ -589,7 +592,7 @@ def run_loop():
         left_power=0.
 
         if visuals:
-            if visual_count==0:
+            if plot_count==downSampleFactor:
                 catSurfaceObj = cam.get_image()
                 scaledDown = pygame.transform.scale(catSurfaceObj, (int(cam_width), int(cam_height)))
                 pixArray=pygame.surfarray.pixels3d(scaledDown)
@@ -610,10 +613,10 @@ def run_loop():
                             pygame.draw.rect(screen, cl, neur.rect, 1)
 
                 screen.blit(scaledUp, (width-(cam_width*cam_scale+10), height-(cam_width*cam_scale+50)))
-                visual_count+=1
-            visual_count+=1
-            if visual_count==visualDownSample+1:
-                visual_count=0
+                #visual_count+=1
+            #visual_count+=1
+            #if visual_count==visualDownSample+1:
+             #   visual_count=0
 
         for counter, neur in enumerate(all_neurons.sprites()):
 
@@ -658,7 +661,7 @@ def run_loop():
                 elif neur.tp=='leftbackward':
                     left_power-=mean_v
 
-            if not neur.super_type=='motor' and max_v>25.0: #and neur.fire_counter==0:
+            if not neur.super_type=='motor' and max_v>10.0: #and neur.fire_counter==0:
                 #neur.fire_counter=fire_image_delay
                 #neur.image=firing_neuron_image
                 #dirty_recs.append(neur.rect)
@@ -773,7 +776,7 @@ def run_loop():
         t+=step
 #        if plot_count==downSampleFactor:
 #            v=np.append(v[1::], [np.array(all_neurons.sprites()[0].mod(0.5).v)])
-        plot_count+=1
+        
 
         if plot_count==downSampleFactor:
             plot_count=0
@@ -801,6 +804,18 @@ def run_loop():
 
 
 pygame.init()
+dispinf=pygame.display.Info()
+
+
+width=dispinf.current_w-200
+height=dispinf.current_h-200
+
+if width>1300:
+    width=1300
+if height>710:
+    height=710
+
+    
 root = tk.Tk()
 root.withdraw()
 
