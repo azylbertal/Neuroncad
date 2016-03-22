@@ -28,7 +28,7 @@ if RPI:
     downSampleFactor=40.
 
 else:
-    downSampleFactor=20.
+    downSampleFactor=10.
 
 BLACK = (  0,   0,   0)
 WHITE = (255, 255, 255)
