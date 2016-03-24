@@ -45,7 +45,7 @@ try:
     sound_card=True
 except:
     sound_card=False
-        
+
 all_neurons = pygame.sprite.Group()
 
 ir_conversion=50.
@@ -192,15 +192,15 @@ class AP():
         self.axon=axon
         self.pos=0
 	self.old_pos=0
-    
-    
+
+
     def draw_and_advance(self, to_draw):
         #oldc1=pygame.draw.circle(screen, bgcolor, [int(p) for p in self.axon.points[self.pos]], 5)
         self.pos+=1
 	if to_draw:
 		oldc=pygame.draw.circle(screen, WHITE, map(int, self.axon.points[self.old_pos]), 7)
         #old_line=pygame.draw.line(screen, BLUE, [int(p) for p in self.axon.points[self.pos]], [int(pp) for pp in self.axon.points[self.pos+1]], 6)
-        
+
         	newc=pygame.draw.circle(screen, self.axon.cl, map(int, self.axon.points[self.pos]), 7)
 		self.old_pos=self.pos
         	return [oldc, newc]
@@ -271,7 +271,7 @@ def receptiveField():
         cam.start()
         os.system('v4l2-ctl -d '+cam_dev+ ' --set-ctrl exposure_auto=1')
         os.system('v4l2-ctl -d '+cam_dev+ ' --set-ctrl exposure_absolute=10')
-        
+
         camera=True
     except:
         camera=False
@@ -297,7 +297,7 @@ def receptiveField():
             try_array=pygame.surfarray.pixels3d(image)
             try_array[:, :, 0]=try_array[:, :, 2]
             try_array[:, :, 1]=try_array[:, :, 2]
-            
+
             scaledDown = pygame.transform.scale(catSurfaceObj, (int(cam_width), int(cam_height)))
 
             scaledUp = pygame.transform.scale(scaledDown, (width, height))
@@ -505,11 +505,10 @@ def build_loop():
 
         pygame.display.flip()
 
-
 def run_loop():
 
     global motors
-    
+
     if motors:
         forward_left=17
         backward_left=18
@@ -603,17 +602,18 @@ def run_loop():
 
         if visuals:
             if plot_count==downSampleFactor:
-                catSurfaceObj = cam.get_image()
-                scaledDown = pygame.transform.scale(catSurfaceObj, (int(cam_width), int(cam_height)))
-                pixArray=pygame.surfarray.pixels3d(scaledDown)
+                if cam.query_image():
+                    catSurfaceObj = cam.get_image()
+                    scaledDown = pygame.transform.scale(catSurfaceObj, (int(cam_width), int(cam_height)))
+                    pixArray=pygame.surfarray.pixels3d(scaledDown)
 
-                pixArray[:, :, 0]=pixArray[:, :, 2]
-                pixArray[:, :, 1]=pixArray[:, :, 2]
-                my_array=copy.deepcopy(pixArray[:,:,2])
-                del pixArray
-                scaledUp = pygame.transform.scale(scaledDown, (int(cam_width*cam_scale), int(cam_height*cam_scale)))
+                    pixArray[:, :, 0]=pixArray[:, :, 2]
+                    pixArray[:, :, 1]=pixArray[:, :, 2]
+                    my_array=copy.deepcopy(pixArray[:,:,2])
+                    del pixArray
+                    scaledUp = pygame.transform.scale(scaledDown, (int(cam_width*cam_scale), int(cam_height*cam_scale)))
 
-                pygame.draw.rect(scaledUp, BLACK, scaledUp.get_rect(), 1)
+                    pygame.draw.rect(scaledUp, BLACK, scaledUp.get_rect(), 1)
                 for neur in all_neurons.sprites():
                     if neur.tp=='visual':
                         for c in neur.rf:
@@ -675,7 +675,7 @@ def run_loop():
                 neur.fire_counter=fire_image_delay
                 #neur.image=firing_neuron_image
                 #dirty_recs.append(neur.rect)
-                if recording:                
+                if recording:
                     if sound_card and neur==rec_neuron:
                         spike_sound.play()
                 for ax in neur.axons:
@@ -789,7 +789,7 @@ def run_loop():
         t+=step
 #        if plot_count==downSampleFactor:
 #            v=np.append(v[1::], [np.array(all_neurons.sprites()[0].mod(0.5).v)])
-        
+
 
         if plot_count==downSampleFactor:
             plot_count=0
@@ -828,7 +828,7 @@ if width>1300:
 if height>710:
     height=710
 
-    
+
 root = tk.Tk()
 root.withdraw()
 
