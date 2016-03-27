@@ -37,11 +37,12 @@ def init():
     return line,
 
 def animate(i):
-    a=inp.read()
-    y=np.log(np.abs(np.fft.fft(struct.unpack('<1600h', a[1]))))
-    x=np.linspace(0, 1600, 1600)
+    l, a=inp.read()
+    if not l==-32:	
+    	y=np.log(np.abs(np.fft.fft(struct.unpack('<1600h', a))))
+    	x=np.linspace(0, 1600, 1600)
     #y=b[200:]
-    line.set_data(x, y)
+    	line.set_data(x, y)
     return line,
     
 
