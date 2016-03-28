@@ -49,7 +49,7 @@ try:
     sound_card=True
 except:
     sound_card=False
-    
+
 try:
     inp = alsaaudio.PCM(alsaaudio.PCM_CAPTURE, alsaaudio.PCM_NORMAL, u'plughw:CARD=C170,DEV=0')
     inp.setchannels(1)
@@ -117,7 +117,7 @@ class Neuron(pygame.sprite.Sprite):
                 self.freq=int(tkSimpleDialog.askstring('Auditory cell', 'Frequency (Hz): '))
             else:
                 self.freq=freq
-            
+
         elif tp=='visual':
             self.ir_stm=0
             self.image = pygame.image.load("visual.bmp").convert()
@@ -351,13 +351,13 @@ def receptiveField():
     return selected
 
 def get_audio_freqs():
-    
+
     l, a=inp.read()
     if not l==-32:	
         return np.log(np.abs(np.fft.fft(struct.unpack('<'+str(audio_bin)+'h', a))))
     else:
         return None
-    
+
 def build_loop():
 
     global all_neurons
@@ -674,11 +674,11 @@ def run_loop():
 
         if auditories:
             rnd+=1
-            if plot_count==downSampleFactor and (rnd%1000)==0:
+            if plot_count==downSampleFactor and (rnd%100)==0:
                 res=get_audio_freqs()
                 if not res==None:
                     freqs=res
-                
+
         for counter, neur in enumerate(all_neurons.sprites()):
 
             try:
@@ -715,7 +715,7 @@ def run_loop():
                     neur.ir_stm.delay=neuron.h.t
                     neur.ir_stm.dur=step
                     neur.ir_stm.amp=(fval-12)/auditory_conversion
-                    
+
             if neur.super_type=='motor':
                 try:
                     mean_v=20*(70+np.mean(np.array(recv[counter])))
