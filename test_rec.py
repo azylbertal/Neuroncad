@@ -11,8 +11,9 @@ import matplotlib.pyplot as plt
 from matplotlib import animation
 import numpy as np
 
+bin=500
 fig = plt.figure()
-ax = plt.axes(xlim=(0, 300), ylim=(0, 30))
+ax = plt.axes(xlim=(0, bin/16), ylim=(5, 17))
 line, = ax.plot([], [], lw=2)
 
 inp = alsaaudio.PCM(alsaaudio.PCM_CAPTURE, alsaaudio.PCM_NORMAL, u'plughw:CARD=C170,DEV=0')
@@ -29,7 +30,7 @@ inp.setformat(alsaaudio.PCM_FORMAT_S16_LE)
 # This means that the reads below will return either 320 bytes of data
 # or 0 bytes of data. The latter is possible because we are in nonblocking
 # mode.
-inp.setperiodsize(1600)
+inp.setperiodsize(bin)
 #b=[]
 
 def init():
@@ -39,8 +40,8 @@ def init():
 def animate(i):
     l, a=inp.read()
     if not l==-32:	
-    	y=np.log(np.abs(np.fft.fft(struct.unpack('<1600h', a))))
-    	x=np.linspace(0, 1600, 1600)
+    	y=np.log(np.abs(np.fft.fft(struct.unpack('<'+str(bin)+'h', a))))
+    	x=np.linspace(0, bin, bin)
     #y=b[200:]
     	line.set_data(x, y)
     return line,

@@ -5,6 +5,7 @@ import pickle
 import neuron
 import Tkinter as tk
 import tkFileDialog
+import tkSimpleDialog
 #import matplotlib.pyplot as plt
 import numpy as np
 import os
@@ -12,6 +13,8 @@ import copy
 #import cProfile, pstats, StringIO
 #from time import sleep
 import eztext
+import alsaaudio
+import struct
 
 try:
     import RPi.GPIO as io
@@ -38,6 +41,7 @@ width = 1300
 height = 710
 
 step=0.1
+audio_bin=2000
 
 try:
     pygame.mixer.init()
@@ -45,14 +49,28 @@ try:
     sound_card=True
 except:
     sound_card=False
+    
+try:
+    inp = alsaaudio.PCM(alsaaudio.PCM_CAPTURE, alsaaudio.PCM_NORMAL, u'plughw:CARD=C170,DEV=0')
+    inp.setchannels(1)
+    inp.setrate(44100)
+    inp.setformat(alsaaudio.PCM_FORMAT_S16_LE)
+    inp.setperiodsize(audio_bin)
+    rec_dev=True
+    print 'audio input OK'
+except:
+    rec_dev=False
 
 all_neurons = pygame.sprite.Group()
 
+
 ir_conversion=50.
 visual_conversion=7.
+auditory_conversion=0.1
 motors=False
 sensors=False
 visuals=False
+auditories=False
 
 cam_dev="/dev/video0"
 cam_width=32.
@@ -61,10 +79,11 @@ cam_scale=8
 
 
 class Neuron(pygame.sprite.Sprite):
-    def __init__(self, x, y, tp, shift=True, nid=None, rf=None):
-        global motors, sensors, visuals
+    def __init__(self, x, y, tp, shift=True, nid=None, rf=None, freq=None):
+        global motors, sensors, visuals, auditories
         super(Neuron, self).__init__()
         self.rf=0
+        self.freq=None
         if tp == 'excitatory':
             self.image = pygame.image.load("pyramidal.bmp").convert()
             self.super_type='neuron'
@@ -88,6 +107,17 @@ class Neuron(pygame.sprite.Sprite):
             self.ir_stm=0
             self.super_type='sensor'
             sensors=True
+        elif tp=='auditory':
+            self.ir_stm=0
+            self.image = pygame.image.load("auditory.bmp").convert()
+            self.auditory_stm=0
+            self.super_type='sensor'
+            auditories=True
+            if freq==None:
+                self.freq=int(tkSimpleDialog.askstring('Auditory cell', 'Frequency (Hz): '))
+            else:
+                self.freq=freq
+            
         elif tp=='visual':
             self.ir_stm=0
             self.image = pygame.image.load("visual.bmp").convert()
@@ -144,6 +174,7 @@ class pickledNeuron():
         self.super_type=nrn.super_type
         self.nid=nrn.nid
         self.rf=nrn.rf
+        self.freq=nrn.freq
         self.axons=nrn.pickledAxons()
 
 class Button(pygame.sprite.Sprite):
@@ -174,7 +205,7 @@ class Axon():
         #self.rect=0
         self.w=weight
         self.tp=tp
-        if tp=='excitatory' or tp=='irsensor' or tp=='visual':
+        if tp=='excitatory' or tp=='irsensor' or tp=='visual' or tp=='auditory':
             self.cl=BLUE
             self.syn.e=0.0
         elif tp=='inhibitory':
@@ -226,7 +257,7 @@ def setNeuronsInfo(inf):
     all_neurons = pygame.sprite.Group()
 
     for counter, neur in enumerate(inf):
-        nrn=Neuron(neur.rect.x, neur.rect.y, neur.tp, shift=False, nid=neur.nid, rf=neur.rf)
+        nrn=Neuron(neur.rect.x, neur.rect.y, neur.tp, shift=False, nid=neur.nid, rf=neur.rf, freq=neur.freq)
         all_neurons.add(nrn)
 #rev_list=reversed(all_neurons.sprites())
     for counter, neur in enumerate(inf):
@@ -319,6 +350,14 @@ def receptiveField():
         cam.stop()
     return selected
 
+def get_audio_freqs():
+    
+    l, a=inp.read()
+    if not l==-32:	
+        return np.log(np.abs(np.fft.fft(struct.unpack('<'+str(audio_bin)+'h', a))))
+    else:
+        return None
+    
 def build_loop():
 
     global all_neurons
@@ -335,17 +374,19 @@ def build_loop():
     buttons.add(exit_button)
     excitatory_button=Button('pyramidal.bmp', 10, 10, 'excitatory')
     buttons.add(excitatory_button)
-    inhibitory_button=Button('interneuron.bmp', 90, 10, 'inhibitory')
+    inhibitory_button=Button('interneuron.bmp', 80, 10, 'inhibitory')
     buttons.add(inhibitory_button)
-    visual_button=Button('visual.bmp', 180, 10, 'visual')
+    visual_button=Button('visual.bmp', 150, 10, 'visual')
     buttons.add(visual_button)
+    auditory_button=Button('auditory.bmp', 220, 10, 'auditory')
+    buttons.add(auditory_button)
     save_button=Button('save.bmp', width-100, 10)
     buttons.add(save_button)
     load_button=Button('load.bmp', width-50, 10)
     buttons.add(load_button)
 
     #if RPI:
-    irsensor_button=Button('ir_sensor.bmp', 270, 10, 'irsensor')
+    irsensor_button=Button('ir_sensor.bmp', 290, 10, 'irsensor')
     buttons.add(irsensor_button)
     rightforward_button=Button('rightforward.bmp', 360, 10, 'rightforward')
     buttons.add(rightforward_button)
@@ -428,6 +469,8 @@ def build_loop():
                         focus=inhibitory_button
                     elif visual_button.rect.collidepoint([x, y]):
                         focus=visual_button
+                    elif auditory_button.rect.collidepoint([x, y]):
+                        focus=auditory_button
 
 
 #                    if RPI:
@@ -543,7 +586,6 @@ def run_loop():
     fire_image_delay=10
     running=1
     plot_count=0
-    visual_count=0
     buttons = pygame.sprite.Group()
     downflag=False;
     stop_button=pygame.sprite.Sprite()
@@ -592,6 +634,8 @@ def run_loop():
     pixel_width=cam_scale
     pixel_height=cam_scale
     my_array=np.zeros((cam_width, cam_height))
+    freqs=np.zeros(audio_bin)
+    rnd=0
     while running:
         plot_count+=1
         if sensors_init<500:
@@ -628,6 +672,13 @@ def run_loop():
             #if visual_count==visualDownSample+1:
              #   visual_count=0
 
+        if auditories:
+            rnd+=1
+            if plot_count==downSampleFactor and (rnd%1000)==0:
+                res=get_audio_freqs()
+                if not res==None:
+                    freqs=res
+                
         for counter, neur in enumerate(all_neurons.sprites()):
 
             try:
@@ -656,6 +707,15 @@ def run_loop():
                 neur.ir_stm.amp=vamp/visual_conversion
 
 
+            if neur.tp=='auditory':
+                ind=int((neur.freq-1)*(audio_bin/44100.))
+                fval=freqs[ind]
+                if fval>12:
+                    neur.ir_stm=neuron.h.IClamp(neur.mod(0.5))
+                    neur.ir_stm.delay=neuron.h.t
+                    neur.ir_stm.dur=step
+                    neur.ir_stm.amp=(fval-12)/auditory_conversion
+                    
             if neur.super_type=='motor':
                 try:
                     mean_v=20*(70+np.mean(np.array(recv[counter])))
