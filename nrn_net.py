@@ -66,7 +66,7 @@ all_neurons = pygame.sprite.Group()
 
 ir_conversion=50.
 visual_conversion=7.
-auditory_conversion=0.1
+auditory_conversion=100000.
 motors=False
 sensors=False
 visuals=False
@@ -201,16 +201,17 @@ class Axon():
             self.points=points
         self.len=len(self.points)
         self.syn=neuron.h.ExpSyn(endp.mod(0.5))
-        self.syn.tau=4
         #self.rect=0
         self.w=weight
         self.tp=tp
         if tp=='excitatory' or tp=='irsensor' or tp=='visual' or tp=='auditory':
+            self.syn.tau=4
             self.cl=BLUE
             self.syn.e=0.0
         elif tp=='inhibitory':
+            self.syn.tau=20
             self.cl=RED
-            self.syn.e=-70.0
+            self.syn.e=-90.0
         self.con=neuron.h.NetCon(startp.mod(0.5)._ref_v, self.syn, 25.0, self.len*step, self.w, sec=startp.mod)
 
 
@@ -354,7 +355,7 @@ def get_audio_freqs():
 
     l, a=inp.read()
     if not l==-32:	
-        return np.log(np.abs(np.fft.fft(struct.unpack('<'+str(audio_bin)+'h', a))))
+        return (np.abs(np.fft.fft(struct.unpack('<'+str(audio_bin)+'h', a))))
     else:
         return None
 
@@ -708,17 +709,19 @@ def run_loop():
 
 
             if neur.tp=='auditory':
-                ind=int((neur.freq-1)*(audio_bin/44100.))
+                ind=int(round((neur.freq-1)*(audio_bin/44100.)))
                 fval=freqs[ind]
-                if fval>12:
+                if fval>500000:
                     neur.ir_stm=neuron.h.IClamp(neur.mod(0.5))
                     neur.ir_stm.delay=neuron.h.t
                     neur.ir_stm.dur=step
-                    neur.ir_stm.amp=(fval-12)/auditory_conversion
+                    neur.ir_stm.amp=(fval-500000)/auditory_conversion
 
             if neur.super_type=='motor':
                 try:
                     mean_v=20*(70+np.mean(np.array(recv[counter])))
+                    if mean_v<0:
+                        mean_v=0
                 except:
                     mean_v=0.
 
@@ -881,7 +884,7 @@ dispinf=pygame.display.Info()
 
 
 width=dispinf.current_w-200
-height=dispinf.current_h-200
+height=dispinf.current_h-50
 
 if width>1300:
     width=1300
