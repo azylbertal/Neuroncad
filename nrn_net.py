@@ -42,6 +42,7 @@ height = 710
 
 step=0.1
 audio_bin=2000
+stdp_max=5000
 
 try:
     pygame.mixer.init()
@@ -84,6 +85,7 @@ class Neuron(pygame.sprite.Sprite):
         super(Neuron, self).__init__()
         self.rf=0
         self.freq=None
+        self.stdp=0
         if tp == 'excitatory':
             self.image = pygame.image.load("pyramidal.bmp").convert()
             self.super_type='neuron'
@@ -733,17 +735,33 @@ def run_loop():
                     left_power+=mean_v
                 elif neur.tp=='leftbackward':
                     left_power-=mean_v
-
-            if not neur.super_type=='motor' and max_v>25.0 and neur.fire_counter==0:
-                neur.fire_counter=fire_image_delay
-                #neur.image=firing_neuron_image
-                #dirty_recs.append(neur.rect)
-                if recording:
-                    if sound_card and neur==rec_neuron:
-                        spike_sound.play()
-                for ax in neur.axons:
-			
-                    APs.append(AP(ax))
+            
+            if neur.stdp>0:
+                neur.stdp-=1
+                
+            if not neur.super_type=='motor' and max_v>25.0:
+                neur.stdp=stdp_max
+                for n in all_neurons.sprites():
+                    for ax in n.axons:
+                        if ax.end_id==neur.nid:
+                            if n.stdp>0:
+                                ax.w+=(0.2-ax.w)*0.01
+                            else:
+                                ax.w-=(ax.w-0.01)*0.01
+                            
+                            ax.con.weight[0]=ax.w
+                            
+                                
+                if neur.fire_counter==0:
+                    neur.fire_counter=fire_image_delay
+                    #neur.image=firing_neuron_image
+                    #dirty_recs.append(neur.rect)
+                    if recording:
+                        if sound_card and neur==rec_neuron:
+                            spike_sound.play()
+                    for ax in neur.axons:
+    			
+                        APs.append(AP(ax))
 
             if neur.fire_counter>0:
 
