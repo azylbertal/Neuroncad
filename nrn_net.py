@@ -11,10 +11,11 @@ import numpy as np
 import os
 import copy
 #import cProfile, pstats, StringIO
-#from time import sleep
+from time import sleep
 import eztext
 import alsaaudio
 import struct
+import thread
 
 try:
     import RPi.GPIO as io
@@ -41,7 +42,7 @@ width = 1300
 height = 710
 
 step=0.1
-audio_bin=2000
+audio_bin=4000
 stdp_max=5000
 
 try:
@@ -77,6 +78,11 @@ cam_dev="/dev/video0"
 cam_width=32.
 cam_height=24.
 cam_scale=8
+my_array=np.zeros((cam_width, cam_height))
+freqs=np.zeros(audio_bin)
+first_image=False
+
+shut_down=False
 
 
 class Neuron(pygame.sprite.Sprite):
@@ -355,11 +361,48 @@ def receptiveField():
 
 def get_audio_freqs():
 
-    l, a=inp.read()
-    if not l==-32:	
-        return (np.abs(np.fft.fft(struct.unpack('<'+str(audio_bin)+'h', a))))
-    else:
-        return None
+    global shut_down, freqs
+
+    while not shut_down:
+        l, a=inp.read()
+        if not l==-32:	
+            freqs = np.abs(np.fft.fft(struct.unpack('<'+str(audio_bin)+'h', a)))
+
+def get_visual_image():
+    global my_array, shut_down, cam_icon, first_image
+    os.system('v4l2-ctl -d '+cam_dev+ ' --set-ctrl exposure_auto=1')
+
+    cam = pygame.camera.Camera(cam_dev,(width,height), 'HSV')
+    cam.start()
+    pixel_width=cam_scale
+    pixel_height=cam_scale
+
+    while not shut_down:
+        if cam.query_image():
+
+            catSurfaceObj = cam.get_image()
+            scaledDown = pygame.transform.scale(catSurfaceObj, (int(cam_width), int(cam_height)))
+            pixArray=pygame.surfarray.pixels3d(scaledDown)
+
+            pixArray[:, :, 0]=pixArray[:, :, 2]
+            pixArray[:, :, 1]=pixArray[:, :, 2]
+            my_array=copy.deepcopy(pixArray[:,:,2])
+            del pixArray
+            cam_icon = pygame.transform.scale(scaledDown, (int(cam_width*cam_scale), int(cam_height*cam_scale)))
+
+            pygame.draw.rect(cam_icon, BLACK, cam_icon.get_rect(), 1)
+            first_image=True
+        if first_image:
+            for neur in all_neurons.sprites():
+                if neur.tp=='visual':
+                    for c in neur.rf:
+                        poly_points=[[c[0]*pixel_width, c[1]*pixel_height], [(c[0]+1)*pixel_width, c[1]*pixel_height], [(c[0]+1)*pixel_width, (c[1]+1)*pixel_height], [c[0]*pixel_width, (c[1]+1)*pixel_height]]
+                        cl=(int(255/(neur.nid+1)), 255-int(255/(neur.nid+1)), 255)
+                        pygame.draw.polygon(cam_icon, cl, poly_points, 1)
+                        #pygame.draw.rect(screen, cl, neur.rect, 1)
+
+
+    cam.stop()
 
 def build_loop():
 
@@ -553,7 +596,7 @@ def build_loop():
 
 def run_loop():
 
-    global motors
+    global motors, shut_down
 
     if motors:
         forward_left=17
@@ -577,9 +620,9 @@ def run_loop():
         backward_right_pwm.start(0)
 
     if visuals:
-        cam = pygame.camera.Camera(cam_dev,(width,height), 'HSV')
-        cam.start()
-        os.system('v4l2-ctl -d '+cam_dev+ ' --set-ctrl exposure_auto=1')
+        thread.start_new_thread(get_visual_image, ())
+    if auditories:
+        thread.start_new_thread(get_audio_freqs, ())
 
     sensors_init=0
     vmin=-75.
@@ -634,11 +677,7 @@ def run_loop():
         neur.drawAxons()
 
     pygame.display.flip()
-    pixel_width=cam_scale
-    pixel_height=cam_scale
-    my_array=np.zeros((cam_width, cam_height))
-    freqs=np.zeros(audio_bin)
-    rnd=0
+
     while running:
         plot_count+=1
         if sensors_init<500:
@@ -647,40 +686,20 @@ def run_loop():
         right_power=0.
         left_power=0.
 
-        if visuals:
-            if plot_count==downSampleFactor:
-                if cam.query_image():
-                    catSurfaceObj = cam.get_image()
-                    scaledDown = pygame.transform.scale(catSurfaceObj, (int(cam_width), int(cam_height)))
-                    pixArray=pygame.surfarray.pixels3d(scaledDown)
-
-                    pixArray[:, :, 0]=pixArray[:, :, 2]
-                    pixArray[:, :, 1]=pixArray[:, :, 2]
-                    my_array=copy.deepcopy(pixArray[:,:,2])
-                    del pixArray
-                    scaledUp = pygame.transform.scale(scaledDown, (int(cam_width*cam_scale), int(cam_height*cam_scale)))
-
-                    pygame.draw.rect(scaledUp, BLACK, scaledUp.get_rect(), 1)
-                for neur in all_neurons.sprites():
-                    if neur.tp=='visual':
-                        for c in neur.rf:
-                            poly_points=[[c[0]*pixel_width, c[1]*pixel_height], [(c[0]+1)*pixel_width, c[1]*pixel_height], [(c[0]+1)*pixel_width, (c[1]+1)*pixel_height], [c[0]*pixel_width, (c[1]+1)*pixel_height]]
-                            cl=(int(255/(neur.nid+1)), 255-int(255/(neur.nid+1)), 255)
-                            pygame.draw.polygon(scaledUp, cl, poly_points, 1)
-                            pygame.draw.rect(screen, cl, neur.rect, 1)
-
-                screen.blit(scaledUp, (width-(cam_width*cam_scale+10), height-(cam_width*cam_scale+50)))
+#        if visuals:
+#            if plot_count==downSampleFactor:
+#                thread.start_new_thread(get_visual_image, ())
                 #visual_count+=1
             #visual_count+=1
             #if visual_count==visualDownSample+1:
              #   visual_count=0
 
-        if auditories:
-            rnd+=1
-            if plot_count==downSampleFactor and (rnd%100)==0:
-                res=get_audio_freqs()
-                if not res==None:
-                    freqs=res
+        #if auditories:
+            #rnd+=1
+            #if plot_count==downSampleFactor and (rnd%100)==0:
+                #res=get_audio_freqs()
+                #if not res==None:
+                    #freqs=res
 
         for counter, neur in enumerate(all_neurons.sprites()):
 
@@ -735,10 +754,10 @@ def run_loop():
                     left_power+=mean_v
                 elif neur.tp=='leftbackward':
                     left_power-=mean_v
-            
+
             if neur.stdp>0:
                 neur.stdp-=1
-                
+
             if not neur.super_type=='motor' and max_v>25.0:
                 neur.stdp=stdp_max
                 for n in all_neurons.sprites():
@@ -748,10 +767,10 @@ def run_loop():
                                 ax.w+=(0.2-ax.w)*0.01
                             else:
                                 ax.w-=(ax.w-0.01)*0.01
-                            
+
                             ax.con.weight[0]=ax.w
-                            
-                                
+
+
                 if neur.fire_counter==0:
                     neur.fire_counter=fire_image_delay
                     #neur.image=firing_neuron_image
@@ -806,7 +825,9 @@ def run_loop():
         (x, y)=pygame.mouse.get_pos()
         if event.type == pygame.QUIT:
             if visuals:
-                cam.stop()
+                shut_down=True
+                sleep(0.3)
+                shut_down=False
             return 0
 
         if event.type == pygame.MOUSEBUTTONDOWN:
@@ -824,7 +845,9 @@ def run_loop():
             if stop_button.rect.collidepoint([x, y]):
 
                 if visuals:
-                    cam.stop()
+                    shut_down=True
+                    sleep(0.3)
+                    shut_down=False
                 return 0
             for counter, neur in enumerate(all_neurons.sprites()):
                 if neur.rect.collidepoint([x, y]):
@@ -875,9 +898,9 @@ def run_loop():
         if plot_count==downSampleFactor:
             plot_count=0
             if recording:
+
                 v=np.append(v[1::], [np.array(rec_neuron.mod(0.5).v)])
-                #vmax=np.max(v)
-                #vmin=np.min(v)-1
+
 
                 v_scaled=plot_height-(plot_height)*(v-vmin)/(vmax-vmin)
                 v_scaled[(v_scaled<0)]=0
@@ -891,6 +914,8 @@ def run_loop():
             all_neurons.draw(screen)
             for counter, neur in enumerate(all_neurons.sprites()):
                 neur.drawAxons()
+            if visuals and first_image:
+                screen.blit(cam_icon, (width-(cam_width*cam_scale+10), height-(cam_width*cam_scale+50)))
             pygame.display.update()
 
         #dirty_recs=[]
