@@ -13,11 +13,12 @@ from copy import deepcopy
 RED   = (255,   0,   0)
 
 class Camera(object):
-    def __init__(self, dev, width, height, scale):
+    def __init__(self, dev, width, height, scale, gain):
         self.dev=dev
         self.width=width
         self.height=height
         self.scale=scale
+        self.gain=gain
         self.img_buffer=np.zeros((self.width, self.height))
         self.expo=10
         self.first_image=False
@@ -57,7 +58,6 @@ class Camera(object):
                 del pixArray
                 self.cam_icon = pygame.transform.scale(scaledDown, (int(self.width*self.scale), int(self.height*self.scale)))
     
-                #pygame.draw.rect(self.cam_icon, BLACK, self.cam_icon.get_rect(), 1)
                 self.first_image=True
             if self.first_image:
                 for neur in nrns:
@@ -66,10 +66,20 @@ class Camera(object):
                             poly_points=[[c[0]*pixel_width, c[1]*pixel_height], [(c[0]+1)*pixel_width, c[1]*pixel_height], [(c[0]+1)*pixel_width, (c[1]+1)*pixel_height], [c[0]*pixel_width, (c[1]+1)*pixel_height]]
                             cl=(int(255/(neur.nid+1)), 255-int(255/(neur.nid+1)), 255)
                             pygame.draw.polygon(self.cam_icon, cl, poly_points, 1)
-                            #pygame.draw.rect(screen, cl, neur.rect, 1)
     
     
         self.cam.stop()
+
+
+    def get_stim_amp(self, rf):
+        
+        vamp=0
+        pixels=len(rf)
+        for c in rf:
+            vamp+=self.img_buffer[c[0], c[1]]
+        vamp /= pixels
+
+        return vamp/self.gain        
 
 def receptiveField(brn):
 
@@ -105,7 +115,6 @@ def receptiveField(brn):
             scaledUp = pygame.transform.scale(scaledDown, (brn.width, brn.height))
         else:
             scaledUp = pygame.Surface((brn.width, brn.height))
-            #scaledUp.fill(BGCOLOR)
         for neur in brn.neurons.sprites():
             if neur.tp=='visual':
                 for c in neur.rf:
