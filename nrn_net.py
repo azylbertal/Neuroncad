@@ -9,7 +9,7 @@ import eztext
 import thread
 from camera_module import Camera
 from mic_module import Mic
-from neuron_module import Neuron, Axon, AP
+from neuron_module import Neuron, Axon, AP, pickledNeuron
 
 try:
     import RPi.GPIO as io
@@ -91,14 +91,17 @@ class brain(object):
     def getNeuronsInfo(self):
         neurons=[]
         for counter, neur in enumerate(self.neurons.sprites()):
-            neurons+=[self.pickledNeuron(neur)]
+            neurons+=[pickledNeuron(neur)]
     
         return neurons
 
     def setNeuronsInfo(self, inf):
         self.neurons = pygame.sprite.Group()
+        self.visuals=0
+        self.motors=0
+        self.auditories=0
         for counter, neur in enumerate(inf):
-            nrn=Neuron(neur.rect.x, neur.rect.y, neur.tp, shift=False, nid=neur.nid, rf=neur.rf, freq=neur.freq)
+            nrn=Neuron(neur.rect.x, neur.rect.y, neur.tp, self, shift=False, nid=neur.nid, rf=neur.rf, freq=neur.freq)
             self.updateCounts(neur.tp, 1)
             self.neurons.add(nrn)
         for counter, neur in enumerate(inf):
@@ -227,6 +230,7 @@ class brain(object):
                             file_path = tkFileDialog.askopenfilename()
                             fl=open(file_path, 'r')
                             inf=pickle.load(fl)
+
                             self.setNeuronsInfo(inf)
                             nid=len(self.neurons.sprites())
                             fl.close()
@@ -305,6 +309,7 @@ class brain(object):
     
             pygame.display.flip()
     
+    @profile
     def run_loop(self):
     
         if self.motors>0:
@@ -318,6 +323,8 @@ class brain(object):
         vmin=-75.
         vmax=-40.
         plot_len=400
+        plist=np.vstack((np.arange(plot_len), np.zeros(plot_len)))
+
         plot_height=100
         fire_image_delay=10
         plot_count=0
@@ -493,10 +500,14 @@ class brain(object):
                 plot_count=0
                 if recording:
     
-                    v=np.append(v[1::], [np.array(rec_neuron.mod(0.5).v)])
+                    new_v=rec_neuron.mod(0.5).v
+                    v=np.roll(v, len(v)-1)
+                    v[-1::]=new_v
                     v_scaled=plot_height-(plot_height)*(v-vmin)/(vmax-vmin)
                     v_scaled[(v_scaled<0)]=0
-                    plist=np.vstack((np.array(range(plot_len)), v_scaled))
+#                    plist=np.vstack((np.arange(plot_len), v_scaled))
+                    plist[1, :] = v_scaled
+
                     plt.fill(BGCOLOR)
                     pygame.draw.lines(plt, BLUE, False, np.transpose(plist))
                     self.screen.blit(plt, (100, 10))

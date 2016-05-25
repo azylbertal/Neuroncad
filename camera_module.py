@@ -6,6 +6,7 @@ Created on Sun May 22 12:36:11 2016
 """
 
 import pygame
+import pygame.camera
 import numpy as np
 import os
 from copy import deepcopy
@@ -73,6 +74,7 @@ class Camera(object):
 
     def get_stim_amp(self, rf):
         
+#        vamp=np.mean(self.img_buffer[rf[:, 0], rf[:, 1]])
         vamp=0
         pixels=len(rf)
         for c in rf:
@@ -128,4 +130,4 @@ def receptiveField(brn):
         pygame.display.update()
     
     brn.sns.cam.cam.stop()
-    return selected
+    return np.array(selected)

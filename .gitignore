@@ -1,2 +1,4 @@
 *.pyc
 out.out
+kernprof.py
+*.lprof
