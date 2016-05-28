@@ -29,14 +29,6 @@ BGCOLOR = WHITE
 
 stdp_max = 5000
 
-try:
-    pygame.mixer.init()
-    spike_sound = pygame.mixer.Sound("spike.wav")
-    sound_card = True
-except:
-    sound_card = False
-
-
 class RingBuffer():
 
     def __init__(self, length, initial):
@@ -59,7 +51,7 @@ class Sensors(object):
         self.mic = Mic(4000, 500000, 100000)
 
         if RPi:
-            self.spi = SpiSensors([50])
+            self.spi = SpiSensors([30])
 
 
 class Button(pygame.sprite.Sprite):
@@ -87,6 +79,15 @@ class brain(object):
         if self.height > 710:
             self.height = 710
 
+        try:
+            pygame.mixer.init()
+            self.spike_sound = pygame.mixer.Sound("spike.wav")
+            self.sound_card = True
+            print "Sound output detected"
+        except:
+            self.sound_card = False
+            print "sound output not detected"
+
         self.tkroot = tk.Tk()
         self.tkroot.withdraw()
 
@@ -107,23 +108,26 @@ class brain(object):
     def __del__(self):
         print "brain object deleted"
 
-    def getNeuronsInfo(self):
+    def get_neurons_info(self):
         neurons = []
         for counter, neur in enumerate(self.neurons.sprites()):
             neurons += [pickledNeuron(neur)]
 
         return neurons
 
-    def setNeuronsInfo(self, inf):
+    def set_neurons_info(self, inf):
         self.neurons = pygame.sprite.Group()
         self.visuals = 0
         self.motors = 0
         self.auditories = 0
+        last_nid = 0
         for counter, neur in enumerate(inf):
             nrn = Neuron(neur.rect.x, neur.rect.y, neur.tp, self,
                          shift=False, nid=neur.nid, rf=neur.rf, freq=neur.freq)
             self.updateCounts(neur.tp, 1)
             self.neurons.add(nrn)
+            if neur.nid > last_nid:
+                last_nid = neur.nid
         for counter, neur in enumerate(inf):
 
             for paxon in neur.axons:
@@ -134,6 +138,7 @@ class brain(object):
                         end_nrn = neur
                 start_nrn.axons.append(Axon(start_nrn, end_nrn, paxon['points'], start_nrn.tp, paxon[
                                        'weight'], paxon['start'], paxon['end'], self.step, interp=False))
+        return last_nid
 
     def stop_rec(self):
         if self.visuals > 0:
@@ -160,6 +165,7 @@ class brain(object):
         buttons = pygame.sprite.Group()
         drawing = False
         downflag = False
+        update_screen = True
         pts = []
         building = True
         nid = 0
@@ -209,6 +215,9 @@ class brain(object):
             if event.type == pygame.QUIT:
                 return 0
 
+            if event.type == pygame.KEYDOWN:
+                update_screen = True
+
             if event.type == pygame.MOUSEBUTTONDOWN:
                 mouse_buttons = pygame.mouse.get_pressed()
                 if mouse_buttons[0]:
@@ -216,6 +225,7 @@ class brain(object):
                 if mouse_buttons[2]:
                     for neur in self.neurons.sprites():
                         if neur.rect.collidepoint([x, y]):
+                            update_screen=True
                             for n in self.neurons.sprites():
                                 axons_to_remove = []
                                 for ax in n.axons:
@@ -238,6 +248,7 @@ class brain(object):
                     downflag = False
 
             if event.type == pygame.MOUSEBUTTONUP:
+                update_screen=True
                 if mouse_buttons[0]:
                     if not drawing:
 
@@ -247,19 +258,18 @@ class brain(object):
                             return 0
                         elif save_button.rect.collidepoint([x, y]):
                             file_path = tkFileDialog.asksaveasfilename()
-                            fl = open(file_path, 'w')
-                            info = self.getNeuronsInfo()
-
-                            pickle.dump(info, fl)
-                            fl.close()
+                            if not file_path == ():
+                                fl = open(file_path, 'w')
+                                info = self.get_neurons_info()
+                                pickle.dump(info, fl)
+                                fl.close()
                         elif load_button.rect.collidepoint([x, y]):
                             file_path = tkFileDialog.askopenfilename()
-                            fl = open(file_path, 'r')
-                            inf = pickle.load(fl)
-
-                            self.setNeuronsInfo(inf)
-                            nid = len(self.neurons.sprites())
-                            fl.close()
+                            if not file_path == ():
+                                fl = open(file_path, 'r')
+                                inf = pickle.load(fl)
+                                nid = self.set_neurons_info(inf) + 1
+                                fl.close()
 
                         elif excitatory_button.rect.collidepoint([x, y]):
                             focus = excitatory_button
@@ -318,32 +328,34 @@ class brain(object):
                     downflag = False
 
             if drawing:
-
+                update_screen = True
                 pts = pts + [[x, y]]
 
-            self.screen.fill(BGCOLOR)
-            self.neurons.draw(self.screen)
-            for neur in self.neurons.sprites():
-                neur.drawAxons()
-            buttons.draw(self.screen)
             wightbx.update(event)
-            wightbx.draw(self.screen)
-            pygame.draw.rect(self.screen, RED, focus.rect, 2)
 
-            if len(pts) > 1:
-                pygame.draw.lines(self.screen, BLACK, False, pts, 5)
+            if update_screen:
+                update_screen = False
+                self.screen.fill(BGCOLOR)
+                self.neurons.draw(self.screen)
+                for neur in self.neurons.sprites():
+                    neur.drawAxons()
+                buttons.draw(self.screen)
+                wightbx.draw(self.screen)
+                pygame.draw.rect(self.screen, RED, focus.rect, 2)
 
-            pygame.display.flip()
+                if len(pts) > 1:
+                    pygame.draw.lines(self.screen, BLACK, False, pts, 5)
+
+                pygame.display.flip()
 
     def run_loop(self):
 
-        if self.motors > 0:
+        if RPI and self.motors > 0:
             mtrs = Motors()
-        if self.visuals > 0:
+        if self.visuals > 0 and self.sns.cam.online:
             thread.start_new_thread(
                 self.sns.cam.update_buffer, (self.neurons.sprites(), self.screen, self.width - (self.sns.cam.width * self.sns.cam.scale + 10), self.height - (self.sns.cam.width * self.sns.cam.scale + 50)))
-
-        if self.auditories > 0:
+        if self.auditories > 0 and self.sns.mic.online:
             thread.start_new_thread(self.sns.mic.get_audio_freqs, ())
 
         sensors_init = 0
@@ -368,7 +380,7 @@ class brain(object):
         pipette.rect = pipette.image.get_rect()
         buttons.add(pipette)
         plt = pygame.Surface((plot_len, plot_height))
-
+        rec_neuron = 0
         APs = []
         recv = []
         recording = False
@@ -405,23 +417,20 @@ class brain(object):
                 except:
                     max_v = 0.
 
-                if neur.tp == 'irsensor' and sensors_init == 500:
-                    neur.ext_stm = neuron.h.IClamp(neur.mod(0.5))
+                if RPI and neur.tp == 'irsensor' and sensors_init == 500:
                     neur.ext_stm.delay = neuron.h.t
                     neur.ext_stm.dur = self.step
                     neur.ext_stm.amp = self.sns.spi.get_stim_amp(0)
 
-                if neur.tp == 'visual':
-                    neur.ext_stm = neuron.h.IClamp(neur.mod(0.5))
+                if neur.tp == 'visual' and sensors_init == 500:
                     neur.ext_stm.delay = neuron.h.t
                     neur.ext_stm.dur = self.step
                     neur.ext_stm.amp = self.sns.cam.get_stim_amp(neur.rf)
 
-                if neur.tp == 'auditory':
+                if neur.tp == 'auditory' and sensors_init == 500:
                     audio_stim_amp = self.sns.mic.get_stim_amp(neur.freq)
 
                     if audio_stim_amp is not None:
-                        neur.ext_stm = neuron.h.IClamp(neur.mod(0.5))
                         neur.ext_stm.delay = neuron.h.t
                         neur.ext_stm.dur = self.step
                         neur.ext_stm.amp = audio_stim_amp
@@ -461,8 +470,8 @@ class brain(object):
                     if neur.fire_counter == 0:
                         neur.fire_counter = fire_image_delay
                         if recording:
-                            if sound_card and neur == rec_neuron:
-                                spike_sound.play()
+                            if self.sound_card and neur == rec_neuron:
+                                self.spike_sound.play()
                         for ax in neur.axons:
 
                             APs.append(AP(ax, self.screen))
@@ -471,7 +480,7 @@ class brain(object):
 
                     neur.fire_counter -= 1
 
-            if self.motors > 0:
+            if self.motors > 0 and RPI:
                 mtrs.update_power(left_power, right_power)
 
             event = pygame.event.poll()
@@ -525,7 +534,7 @@ class brain(object):
 
             if plot_count == self.downSampleFactor:
                 plot_count = 0
-                sleep(0.0000001)
+                sleep(0.001)
                 if recording:
                     v.extend(rec_neuron.mod(0.5).v)
                     v_scaled = plot_height - \
@@ -535,14 +544,13 @@ class brain(object):
 
                     plt.fill(BGCOLOR)
                     pygame.draw.lines(plt, BLUE, False, np.transpose(plist))
+
                     self.screen.blit(plt, (100, 10))
 
                 self.neurons.draw(self.screen)
                 for counter, neur in enumerate(self.neurons.sprites()):
                     neur.drawAxons()
-                if self.visuals > 0 and self.sns.cam.first_image:
-                    self.screen.blit(self.sns.cam.cam_icon, (self.width - (self.sns.cam.width *
-                                                                           self.sns.cam.scale + 10), self.height - (self.sns.cam.width * self.sns.cam.scale + 50)))
+
                 pygame.display.update()
 
 
@@ -550,8 +558,8 @@ def main():
 
     if RPI:
         io.setmode(io.BCM)
-        downSampleFactor = 40.
-
+        downSampleFactor = 30.
+        io.setwarnings(False)
     else:
         downSampleFactor = 10.
 

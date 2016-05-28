@@ -9,8 +9,6 @@ import pygame
 import pygame.camera
 import numpy as np
 import os
-from copy import deepcopy
-from time import sleep
 
 RED = (255,   0,   0)
 
@@ -49,22 +47,20 @@ class Camera(object):
         pixel_width = self.scale
         pixel_height = self.scale
         self.first_image = False
+
         while not self.shut_down:
-            if self.cam.query_image():
+            catSurfaceObj = self.cam.get_image()
+            scaledDown = pygame.transform.scale(
+                catSurfaceObj, (int(self.width), int(self.height)))
+            pixArray = pygame.surfarray.pixels3d(scaledDown)
 
-                catSurfaceObj = self.cam.get_image()
-                scaledDown = pygame.transform.scale(
-                    catSurfaceObj, (int(self.width), int(self.height)))
-                pixArray = pygame.surfarray.pixels3d(scaledDown)
+            pixArray[:, :, 0] = pixArray[:, :, 2]
+            pixArray[:, :, 1] = pixArray[:, :, 2]
 
-                pixArray[:, :, 0] = pixArray[:, :, 2]
-                pixArray[:, :, 1] = pixArray[:, :, 2]
-                self.img_buffer = deepcopy(pixArray[:, :, 2])
-                del pixArray
-                self.cam_icon = pygame.transform.scale(
-                    scaledDown, (int(self.width * self.scale), int(self.height * self.scale)))
-
-                self.first_image = True
+            self.img_buffer = pixArray[:, :, 2]
+            self.cam_icon = pygame.transform.scale(
+                scaledDown, (int(self.width * self.scale), int(self.height * self.scale)))
+            self.first_image = True
             if self.first_image:
                 for neur in nrns:
                     if neur.tp == 'visual':
@@ -73,23 +69,24 @@ class Camera(object):
                                 c[0] + 1) * pixel_width, (c[1] + 1) * pixel_height], [c[0] * pixel_width, (c[1] + 1) * pixel_height]]
                             cl = (int(255 / (neur.nid + 1)), 255 -
                                   int(255 / (neur.nid + 1)), 255)
-                            pygame.draw.polygon(
-                                self.cam_icon, cl, poly_points, 1)
+                            pygame.draw.polygon(self.cam_icon, cl, poly_points, 1)
+
 
                 screen.blit(self.cam_icon, (x, y))
-
         self.cam.stop()
 
     def get_stim_amp(self, rf):
 
-        #        vamp=np.mean(self.img_buffer[rf[:, 0], rf[:, 1]])
-        vamp = 0
-        pixels = len(rf)
-        for c in rf:
-            vamp += self.img_buffer[c[0], c[1]]
-        vamp /= pixels
+        if self.online:
+            vamp = 0
+            pixels = len(rf)
+            for c in rf:
+                vamp += self.img_buffer[c[0], c[1]]
+            vamp /= pixels
 
-        return vamp / self.gain
+            return vamp / self.gain
+        else:
+            return 0
 
 
 def receptive_field(brn):

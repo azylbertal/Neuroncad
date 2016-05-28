@@ -39,10 +39,12 @@ class Mic(object):
                     struct.unpack('<' + str(self.audio_bin) + 'h', a)))
 
     def get_stim_amp(self, freq):
-
-        ind = int(round((freq - 1) * (self.audio_bin / 44100.)))
-        fval = self.freqs[ind]
-        if fval > self.threshold:
-            return (fval - self.threshold) / self.audio_gain
+        if self.online:
+            ind = int(round((freq - 1) * (self.audio_bin / 44100.)))
+            fval = self.freqs[ind]
+            if fval > self.threshold:
+                return (fval - self.threshold) / self.audio_gain
+            else:
+                return None
         else:
             return None

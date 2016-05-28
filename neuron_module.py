@@ -14,6 +14,7 @@ from camera_module import receptive_field
 WHITE = (255, 255, 255)
 RED = (255,   0,   0)
 BLUE = (0,   0,   255)
+BLACK = (0, 0, 0)
 
 
 class Neuron(pygame.sprite.Sprite):
@@ -26,7 +27,7 @@ class Neuron(pygame.sprite.Sprite):
         self.rf = 0
         self.freq = None
         self.stdp = 0
-
+        self.mod = neuron.h.Section()
         if tp == 'excitatory':
             self.image = pygame.image.load("pyramidal.bmp").convert()
             self.super_type = 'neuron'
@@ -47,10 +48,8 @@ class Neuron(pygame.sprite.Sprite):
             self.super_type = 'motor'
         elif tp == 'irsensor':
             self.image = pygame.image.load("ir_sensor.bmp").convert()
-            self.ext_stm = 0
             self.super_type = 'sensor'
         elif tp == 'auditory':
-            self.ext_stm = 0
             self.image = pygame.image.load("auditory.bmp").convert()
             self.auditory_stm = 0
             self.super_type = 'sensor'
@@ -61,7 +60,7 @@ class Neuron(pygame.sprite.Sprite):
                 self.freq = freq
 
         elif tp == 'visual':
-            self.ext_stm = 0
+
             self.image = pygame.image.load("visual.bmp").convert()
             self.visual_stm = 0
             self.super_type = 'sensor'
@@ -84,12 +83,17 @@ class Neuron(pygame.sprite.Sprite):
             self.rect.x = x
             self.rect.y = y
 
-        self.mod = neuron.h.Section()
+
         if self.super_type == 'neuron' or self.super_type == 'sensor':
             self.mod.insert('hh')
 
         elif self.super_type == 'motor':
             self.mod.insert('pas')
+        if self.super_type == 'sensor':
+            self.ext_stm = neuron.h.IClamp(self.mod(0.5))
+            self.ext_stm.delay = 0
+            self.ext_stm.dur = 1
+            self.ext_stm.amp = 0
         self.fire_counter = 0
         self.axons = []
 
@@ -123,6 +127,8 @@ class Axon(object):
 
     def __init__(self, startp, endp, points, tp, weight, start_id, end_id, time_step, interp=True):
 
+
+        self.cl = BLACK
         self.start_id = start_id
         self.end_id = end_id
         if interp:
@@ -157,22 +163,22 @@ class AP(object):
         self.pos = 0
         self.old_pos = 0
         self.screen = screen
-
+        self.size = int(self.axon.w * 50)
     def draw_and_advance(self, to_draw):
         self.pos += 1
         if to_draw:
             oldc = pygame.draw.circle(self.screen, WHITE, map(
-                int, self.axon.points[self.old_pos]), 7)
+                int, self.axon.points[self.old_pos]), self.size)
 
             newc = pygame.draw.circle(self.screen, self.axon.cl, map(
-                int, self.axon.points[self.pos]), 7)
+                int, self.axon.points[self.pos]), self.size)
             self.old_pos = self.pos
             return [oldc, newc]
         else:
             return []
 
     def clear(self):
-        return [pygame.draw.circle(self.screen, WHITE, [int(p) for p in self.axon.points[self.old_pos]], 7)]
+        return [pygame.draw.circle(self.screen, WHITE, [int(p) for p in self.axon.points[self.old_pos]], self.size)]
 
 
 def inter(pt1, pt2):

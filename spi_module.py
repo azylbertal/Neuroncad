@@ -11,7 +11,7 @@ class SpiSensors(object):
 
     def __init__(self, gains):
         self.spi = spidev.SpiDev()
-        self.open(0, 0)
+        self.spi.open(0, 0)
         self.gains = gains
 
     def ReadChannel(self, channel):
