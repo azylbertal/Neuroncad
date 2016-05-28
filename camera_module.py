@@ -10,7 +10,7 @@ import pygame.camera
 import numpy as np
 import os
 
-RED = (255,   0,   0)
+RED = (255, 0, 0)
 
 
 class Camera(object):
@@ -28,7 +28,7 @@ class Camera(object):
         if not os.path.exists(dev):
             print "Camera not detected"
             self.online = False
-            return 
+            return
         try:
             pygame.camera.init()
 
@@ -73,8 +73,8 @@ class Camera(object):
                                 c[0] + 1) * pixel_width, (c[1] + 1) * pixel_height], [c[0] * pixel_width, (c[1] + 1) * pixel_height]]
                             cl = (int(255 / (neur.nid + 1)), 255 -
                                   int(255 / (neur.nid + 1)), 255)
-                            pygame.draw.polygon(self.cam_icon, cl, poly_points, 1)
-
+                            pygame.draw.polygon(
+                                self.cam_icon, cl, poly_points, 1)
 
                 screen.blit(self.cam_icon, (x, y))
         self.cam.stop()
@@ -97,11 +97,10 @@ def receptive_field(brn):
 
     pixel_width = float(brn.width) / brn.sns.cam.width
     pixel_height = float(brn.height) / brn.sns.cam.height
-    
 
     selected = []
 
-    if brn.sns.cam.online:    
+    if brn.sns.cam.online:
         brn.sns.cam.cam.start()
     going = True
     pygame.event.set_blocked(pygame.MOUSEMOTION)
@@ -144,7 +143,7 @@ def receptive_field(brn):
             pygame.draw.polygon(brn.screen, RED, poly_points)
         pygame.display.update()
 
-    if brn.sns.cam.online:    
+    if brn.sns.cam.online:
         brn.sns.cam.cam.stop()
-        
+
     return np.array(selected)

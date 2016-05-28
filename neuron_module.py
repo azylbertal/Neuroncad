@@ -11,8 +11,8 @@ import neuron
 from camera_module import receptive_field
 
 WHITE = (255, 255, 255)
-RED = (255,   0,   0)
-BLUE = (0,   0,   255)
+RED = (255, 0, 0)
+BLUE = (0, 0, 255)
 BLACK = (0, 0, 0)
 
 
@@ -28,35 +28,36 @@ class Neuron(pygame.sprite.Sprite):
         self.stdp = 0
         self.mod = neuron.h.Section()
         if tp == 'excitatory':
-            self.image = pygame.image.load("pyramidal.bmp").convert()
+            self.image = pygame.image.load("static/pyramidal.bmp").convert()
             self.super_type = 'neuron'
         elif tp == 'inhibitory':
-            self.image = pygame.image.load("interneuron.bmp").convert()
+            self.image = pygame.image.load("static/interneuron.bmp").convert()
             self.super_type = 'neuron'
         elif tp == 'rightforward':
-            self.image = pygame.image.load("rightforward.bmp").convert()
+            self.image = pygame.image.load("static/rightforward.bmp").convert()
             self.super_type = 'motor'
         elif tp == 'rightbackward':
-            self.image = pygame.image.load("rightbackward.bmp").convert()
+            self.image = pygame.image.load(
+                "static/rightbackward.bmp").convert()
             self.super_type = 'motor'
         elif tp == 'leftforward':
-            self.image = pygame.image.load("leftforward.bmp").convert()
+            self.image = pygame.image.load("static/leftforward.bmp").convert()
             self.super_type = 'motor'
         elif tp == 'leftbackward':
-            self.image = pygame.image.load("leftbackward.bmp").convert()
+            self.image = pygame.image.load("static/leftbackward.bmp").convert()
             self.super_type = 'motor'
         elif tp == 'irsensor':
-            self.image = pygame.image.load("ir_sensor.bmp").convert()
+            self.image = pygame.image.load("static/ir_sensor.bmp").convert()
             self.super_type = 'sensor'
         elif tp == 'auditory':
-            self.image = pygame.image.load("auditory.bmp").convert()
+            self.image = pygame.image.load("static/auditory.bmp").convert()
             self.auditory_stm = 0
             self.super_type = 'sensor'
             self.freq = freq
 
         elif tp == 'visual':
 
-            self.image = pygame.image.load("visual.bmp").convert()
+            self.image = pygame.image.load("static/visual.bmp").convert()
             self.visual_stm = 0
             self.super_type = 'sensor'
             if rf is None:
@@ -77,7 +78,6 @@ class Neuron(pygame.sprite.Sprite):
         else:
             self.rect.x = x
             self.rect.y = y
-
 
         if self.super_type == 'neuron' or self.super_type == 'sensor':
             self.mod.insert('hh')
@@ -122,7 +122,6 @@ class Axon(object):
 
     def __init__(self, startp, endp, points, tp, weight, start_id, end_id, time_step, spike_threshold, interp=True):
 
-
         self.cl = BLACK
         self.start_id = start_id
         self.end_id = end_id
@@ -159,6 +158,7 @@ class AP(object):
         self.old_pos = 0
         self.screen = screen
         self.size = int(self.axon.w * 50)
+
     def draw_and_advance(self, to_draw):
         self.pos += 1
         if to_draw:

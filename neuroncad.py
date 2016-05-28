@@ -22,13 +22,14 @@ except:
     RPI = False
     print "Not running on RPi"
 
-BLACK = (0,   0,   0)
+BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
-RED = (255,   0,   0)
-BLUE = (0,   0,   255)
+RED = (255, 0, 0)
+BLUE = (0, 0, 255)
 BGCOLOR = WHITE
 
 stdp_max = 5000
+
 
 class RingBuffer():
 
@@ -82,7 +83,7 @@ class brain(object):
 
         try:
             pygame.mixer.init()
-            self.spike_sound = pygame.mixer.Sound("spike.wav")
+            self.spike_sound = pygame.mixer.Sound("static/spike.wav")
             self.sound_card = True
             print "Sound output detected"
         except:
@@ -107,8 +108,8 @@ class brain(object):
         self.visuals = 0
         self.auditories = 0
 
-        self.spike_threshold=0.
-        
+        self.spike_threshold = 0.
+
     def __del__(self):
         print "brain object deleted"
 
@@ -173,34 +174,39 @@ class brain(object):
         pts = []
         building = True
         nid = 0
-        run_button = Button('run.bmp', self.width - 80, self.height - 50)
+        run_button = Button(
+            'static/run.bmp', self.width - 80, self.height - 50)
         buttons.add(run_button)
-        exit_button = Button('exit.bmp', self.width - 120, self.height - 40)
+        exit_button = Button(
+            'static/exit.bmp', self.width - 120, self.height - 40)
         buttons.add(exit_button)
-        excitatory_button = Button('pyramidal.bmp', 10, 10, 'excitatory')
+        excitatory_button = Button(
+            'static/pyramidal.bmp', 10, 10, 'excitatory')
         buttons.add(excitatory_button)
-        inhibitory_button = Button('interneuron.bmp', 80, 10, 'inhibitory')
+        inhibitory_button = Button(
+            'static/interneuron.bmp', 80, 10, 'inhibitory')
         buttons.add(inhibitory_button)
-        visual_button = Button('visual.bmp', 150, 10, 'visual')
+        visual_button = Button('static/visual.bmp', 150, 10, 'visual')
         buttons.add(visual_button)
-        auditory_button = Button('auditory.bmp', 220, 10, 'auditory')
+        auditory_button = Button('static/auditory.bmp', 220, 10, 'auditory')
         buttons.add(auditory_button)
-        save_button = Button('save.bmp', self.width - 100, 10)
+        save_button = Button('static/save.bmp', self.width - 100, 10)
         buttons.add(save_button)
-        load_button = Button('load.bmp', self.width - 50, 10)
+        load_button = Button('static/load.bmp', self.width - 50, 10)
         buttons.add(load_button)
-        irsensor_button = Button('ir_sensor.bmp', 290, 10, 'irsensor')
+        irsensor_button = Button('static/ir_sensor.bmp', 290, 10, 'irsensor')
         buttons.add(irsensor_button)
         rightforward_button = Button(
-            'rightforward.bmp', 360, 10, 'rightforward')
+            'static/rightforward.bmp', 360, 10, 'rightforward')
         buttons.add(rightforward_button)
         rightbackward_button = Button(
-            'rightbackward.bmp', 450, 10, 'rightbackward')
+            'static/rightbackward.bmp', 450, 10, 'rightbackward')
         buttons.add(rightbackward_button)
-        leftforward_button = Button('leftforward.bmp', 540, 10, 'leftforward')
+        leftforward_button = Button(
+            'static/leftforward.bmp', 540, 10, 'leftforward')
         buttons.add(leftforward_button)
         leftbackward_button = Button(
-            'leftbackward.bmp', 630, 10, 'leftbackward')
+            'static/leftbackward.bmp', 630, 10, 'leftbackward')
         buttons.add(leftbackward_button)
 
         focus = excitatory_button
@@ -231,7 +237,7 @@ class brain(object):
                 if mouse_buttons[2]:
                     for neur in self.neurons.sprites():
                         if neur.rect.collidepoint([x, y]):
-                            update_screen=True
+                            update_screen = True
                             for n in self.neurons.sprites():
                                 axons_to_remove = []
                                 for ax in n.axons:
@@ -254,7 +260,7 @@ class brain(object):
                     downflag = False
 
             if event.type == pygame.MOUSEBUTTONUP:
-                update_screen=True
+                update_screen = True
                 if mouse_buttons[0]:
                     if not drawing:
 
@@ -305,7 +311,8 @@ class brain(object):
 
                             if not on_neuron:
                                 if focus.tp == 'auditory':
-                                    freq = tkSimpleDialog.askstring('Auditory cell', 'Frequency (Hz): ')
+                                    freq = tkSimpleDialog.askstring(
+                                        'Auditory cell', 'Frequency (Hz): ')
                                     if freq is not None:
                                         self.neurons.add(
                                             Neuron(x, y, focus.tp, self, nid=nid, freq=int(freq)))
@@ -379,18 +386,18 @@ class brain(object):
         plist = np.vstack((np.arange(plot_len), np.zeros(plot_len)))
 
         plot_height = 100
-        fire_image_delay = 10
+        fire_image_delay = 20
         plot_count = 0
         buttons = pygame.sprite.Group()
         downflag = False
         stop_button = pygame.sprite.Sprite()
-        stop_button.image = pygame.image.load("stop.bmp").convert()
+        stop_button.image = pygame.image.load("static/stop.bmp").convert()
         stop_button.rect = stop_button.image.get_rect()
         stop_button.rect.x = self.width - stop_button.rect.width
         stop_button.rect.y = self.height - stop_button.rect.height
         buttons.add(stop_button)
         pipette = pygame.sprite.Sprite()
-        pipette.image = pygame.image.load("pipette.bmp").convert()
+        pipette.image = pygame.image.load("static/pipette.bmp").convert()
         pipette.rect = pipette.image.get_rect()
         buttons.add(pipette)
         plt = pygame.Surface((plot_len, plot_height))
@@ -470,7 +477,7 @@ class brain(object):
                     neur.stdp -= 1
 
                 if not neur.super_type == 'motor' and max_v > self.spike_threshold:
-                    
+
                     neur.stdp = stdp_max
                     for n in self.neurons.sprites():
                         for ax in n.axons:
