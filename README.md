@@ -1,7 +1,6 @@
-
 #Heading 1
 
-* This is an educational tool 
+* This is an educational tool for system level neuroscience, powered by the [NEURON simulation environment](http://www.neuron.yale.edu/neuron/)
 * Version
 * [Learn Markdown](https://bitbucket.org/tutorials/markdowndemo)
 
