@@ -6,7 +6,6 @@ Created on Tue May 24 10:16:37 2016
 """
 
 import pygame
-import tkSimpleDialog
 import math
 import neuron
 from camera_module import receptive_field
@@ -53,11 +52,7 @@ class Neuron(pygame.sprite.Sprite):
             self.image = pygame.image.load("auditory.bmp").convert()
             self.auditory_stm = 0
             self.super_type = 'sensor'
-            if freq is None:
-                self.freq = int(tkSimpleDialog.askstring(
-                    'Auditory cell', 'Frequency (Hz): '))
-            else:
-                self.freq = freq
+            self.freq = freq
 
         elif tp == 'visual':
 
@@ -97,13 +92,13 @@ class Neuron(pygame.sprite.Sprite):
         self.fire_counter = 0
         self.axons = []
 
-    def drawAxons(self):
+    def draw_axons(self):
         recs = []
         for axon in self.axons:
             recs.append(axon.draw(self.screen))
         return recs
 
-    def pickledAxons(self):
+    def pickled_axons(self):
         paxons = []
         for axon in self.axons:
             paxons += [{'points': axon.points, 'weight': axon.w,
@@ -120,12 +115,12 @@ class pickledNeuron(object):
         self.nid = nrn.nid
         self.rf = nrn.rf
         self.freq = nrn.freq
-        self.axons = nrn.pickledAxons()
+        self.axons = nrn.pickled_axons()
 
 
 class Axon(object):
 
-    def __init__(self, startp, endp, points, tp, weight, start_id, end_id, time_step, interp=True):
+    def __init__(self, startp, endp, points, tp, weight, start_id, end_id, time_step, spike_threshold, interp=True):
 
 
         self.cl = BLACK
@@ -150,7 +145,7 @@ class Axon(object):
             self.cl = RED
             self.syn.e = -90.0
         self.con = neuron.h.NetCon(startp.mod(
-            0.5)._ref_v, self.syn, 25.0, self.len * time_step, self.w, sec=startp.mod)
+            0.5)._ref_v, self.syn, spike_threshold, self.len * time_step, self.w, sec=startp.mod)
 
     def draw(self, screen):
         return pygame.draw.lines(screen, self.cl, False, self.points, int(self.w * 20))

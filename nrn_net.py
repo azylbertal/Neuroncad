@@ -3,6 +3,7 @@ import pickle
 import neuron
 import Tkinter as tk
 import tkFileDialog
+import tkSimpleDialog
 import numpy as np
 from time import sleep
 import eztext
@@ -93,6 +94,7 @@ class brain(object):
 
         self.screen = pygame.display.set_mode((self.width, self.height))
         self.screen.fill(BGCOLOR)
+        pygame.display.set_caption("Brain")
 
         neuron.h.load_file("stdrun.hoc")
         self.neurons = pygame.sprite.Group()
@@ -105,6 +107,8 @@ class brain(object):
         self.visuals = 0
         self.auditories = 0
 
+        self.spike_threshold=0.
+        
     def __del__(self):
         print "brain object deleted"
 
@@ -137,7 +141,7 @@ class brain(object):
                     if neur.nid == paxon['end']:
                         end_nrn = neur
                 start_nrn.axons.append(Axon(start_nrn, end_nrn, paxon['points'], start_nrn.tp, paxon[
-                                       'weight'], paxon['start'], paxon['end'], self.step, interp=False))
+                                       'weight'], paxon['start'], paxon['end'], self.step, self.spike_threshold, interp=False))
         return last_nid
 
     def stop_rec(self):
@@ -216,6 +220,8 @@ class brain(object):
                 return 0
 
             if event.type == pygame.KEYDOWN:
+                update_screen = True
+            if event.type == pygame.KEYUP:
                 update_screen = True
 
             if event.type == pygame.MOUSEBUTTONDOWN:
@@ -298,10 +304,18 @@ class brain(object):
                                     on_neuron = True
 
                             if not on_neuron:
-                                self.neurons.add(
-                                    Neuron(x, y, focus.tp, self, nid=nid))
-                                self.updateCounts(focus.tp, 1)
-                                nid += 1
+                                if focus.tp == 'auditory':
+                                    freq = tkSimpleDialog.askstring('Auditory cell', 'Frequency (Hz): ')
+                                    if freq is not None:
+                                        self.neurons.add(
+                                            Neuron(x, y, focus.tp, self, nid=nid, freq=int(freq)))
+                                        self.updateCounts(focus.tp, 1)
+                                        nid += 1
+                                else:
+                                    self.neurons.add(
+                                        Neuron(x, y, focus.tp, self, nid=nid))
+                                    self.updateCounts(focus.tp, 1)
+                                    nid += 1
 
                     else:
                         axon_start = False
@@ -320,7 +334,7 @@ class brain(object):
                             start_id = self.neurons.sprites()[start_nrn].nid
                             end_id = self.neurons.sprites()[end_nrn].nid
                             self.neurons.sprites()[start_nrn].axons.append(Axon(self.neurons.sprites()[
-                                start_nrn], self.neurons.sprites()[end_nrn], pts, tp, w, start_id, end_id, self.step))
+                                start_nrn], self.neurons.sprites()[end_nrn], pts, tp, w, start_id, end_id, self.step, self.spike_threshold))
 
                         pts = []
                         drawing = False
@@ -338,7 +352,7 @@ class brain(object):
                 self.screen.fill(BGCOLOR)
                 self.neurons.draw(self.screen)
                 for neur in self.neurons.sprites():
-                    neur.drawAxons()
+                    neur.draw_axons()
                 buttons.draw(self.screen)
                 wightbx.draw(self.screen)
                 pygame.draw.rect(self.screen, RED, focus.rect, 2)
@@ -398,7 +412,7 @@ class brain(object):
         self.neurons.draw(self.screen)
         buttons.draw(self.screen)
         for neur in self.neurons.sprites():
-            neur.drawAxons()
+            neur.draw_axons()
 
         pygame.display.flip()
 
@@ -455,7 +469,8 @@ class brain(object):
                 if neur.stdp > 0:
                     neur.stdp -= 1
 
-                if not neur.super_type == 'motor' and max_v > 25.0:
+                if not neur.super_type == 'motor' and max_v > self.spike_threshold:
+                    
                     neur.stdp = stdp_max
                     for n in self.neurons.sprites():
                         for ax in n.axons:
@@ -549,7 +564,7 @@ class brain(object):
 
                 self.neurons.draw(self.screen)
                 for counter, neur in enumerate(self.neurons.sprites()):
-                    neur.drawAxons()
+                    neur.draw_axons()
 
                 pygame.display.update()
 

@@ -25,6 +25,10 @@ class Camera(object):
         self.expo = 10
         self.first_image = False
         self.shut_down = False
+        if not os.path.exists(dev):
+            print "Camera not detected"
+            self.online = False
+            return 
         try:
             pygame.camera.init()
 
@@ -91,11 +95,14 @@ class Camera(object):
 
 def receptive_field(brn):
 
-    pixel_width = brn.width / brn.sns.cam.width
-    pixel_height = brn.height / brn.sns.cam.height
+    pixel_width = float(brn.width) / brn.sns.cam.width
+    pixel_height = float(brn.height) / brn.sns.cam.height
+    
+
     selected = []
 
-    brn.sns.cam.cam.start()
+    if brn.sns.cam.online:    
+        brn.sns.cam.cam.start()
     going = True
     pygame.event.set_blocked(pygame.MOUSEMOTION)
 
@@ -111,9 +118,9 @@ def receptive_field(brn):
         if brn.sns.cam.online:
             image = brn.sns.cam.cam.get_image()
             catSurfaceObj = image
-            try_array = pygame.surfarray.pixels3d(image)
-            try_array[:, :, 0] = try_array[:, :, 2]
-            try_array[:, :, 1] = try_array[:, :, 2]
+            pix_array = pygame.surfarray.pixels3d(image)
+            pix_array[:, :, 0] = pix_array[:, :, 2]
+            pix_array[:, :, 1] = pix_array[:, :, 2]
 
             scaledDown = pygame.transform.scale(
                 catSurfaceObj, (int(brn.sns.cam.width), int(brn.sns.cam.height)))
@@ -137,5 +144,7 @@ def receptive_field(brn):
             pygame.draw.polygon(brn.screen, RED, poly_points)
         pygame.display.update()
 
-    brn.sns.cam.cam.stop()
+    if brn.sns.cam.online:    
+        brn.sns.cam.cam.stop()
+        
     return np.array(selected)
