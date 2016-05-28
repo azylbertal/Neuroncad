@@ -1,8 +1,8 @@
-# -*- coding: utf-8 -*-
 """
-Created on Tue May 24 10:16:37 2016
+(C) Asaph Zylbertal 2016, HUJI, Jerusalem, Israel
 
-@author: asaph
+Methods for single neuron simulation and graphics: axons, action potentials
+
 """
 
 import pygame

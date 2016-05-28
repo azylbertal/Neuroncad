@@ -1,9 +1,10 @@
-# -*- coding: utf-8 -*-
 """
-Created on Tue May 24 08:59:34 2016
+(C) Asaph Zylbertal 2016, HUJI, Jerusalem, Israel
 
-@author: asaph
+Interface with microphone on a USB webcam
+
 """
+
 import alsaaudio
 import struct
 import numpy as np

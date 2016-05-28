@@ -1,3 +1,10 @@
+"""
+(C) Asaph Zylbertal 2016, HUJI, Jerusalem, Israel
+
+Main module
+
+"""
+
 import pygame
 import pickle
 import neuron

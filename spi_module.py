@@ -1,9 +1,9 @@
-# -*- coding: utf-8 -*-
 """
-Created on Tue May 24 09:04:49 2016
+(C) Asaph Zylbertal 2016, HUJI, Jerusalem, Israel
 
-@author: asaph
+Interface with SPI ADC chip (for IR distance sensor etc.)
 """
+
 import spidev
 
 

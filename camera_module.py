@@ -1,8 +1,8 @@
-# -*- coding: utf-8 -*-
 """
-Created on Sun May 22 12:36:11 2016
+(C) Asaph Zylbertal 2016, HUJI, Jerusalem, Israel
 
-@author: asaph
+Interface with USB webcam
+
 """
 
 import pygame
