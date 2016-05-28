@@ -9,3 +9,4 @@
 
 * NEURON with python (see: http://www.davison.webfactional.com/notes/installation-neuron-python/)
 * [pygame](http://www.pygame.org/)
+* [EzText](http://pygame.org/project-EzText-920-.html) packaged with source
