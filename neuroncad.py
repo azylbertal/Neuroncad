@@ -277,14 +277,14 @@ class brain(object):
                             return 0
                         elif save_button.rect.collidepoint([x, y]):
                             file_path = tkFileDialog.asksaveasfilename()
-                            if not file_path == ():
+                            if file_path:
                                 fl = open(file_path, 'w')
                                 info = self.get_neurons_info()
                                 pickle.dump(info, fl)
                                 fl.close()
                         elif load_button.rect.collidepoint([x, y]):
                             file_path = tkFileDialog.askopenfilename()
-                            if not file_path == ():
+                            if file_path:
                                 fl = open(file_path, 'r')
                                 inf = pickle.load(fl)
                                 nid = self.set_neurons_info(inf) + 1
@@ -375,7 +375,7 @@ class brain(object):
                     pygame.draw.lines(self.screen, BLACK, False, pts, 5)
 
                 pygame.display.flip()
-
+    #@profile
     def run_loop(self):
 
         if RPI and self.motors > 0:
@@ -453,7 +453,10 @@ class brain(object):
                 if neur.tp == 'visual' and sensors_init == 500:
                     neur.ext_stm.delay = neuron.h.t
                     neur.ext_stm.dur = self.step
-                    neur.ext_stm.amp = self.sns.cam.get_stim_amp(neur.rf)
+                    if plot_count==self.downSampleFactor:
+                        neur.ext_stm.amp=self.sns.cam.get_stim_amp(neur.rf)
+                    #else:
+                    #    neur.ext_stm.amp = 0#self.sns.cam.get_stim_amp(neur.rf)
 
                 if neur.tp == 'auditory' and sensors_init == 500:
                     audio_stim_amp = self.sns.mic.get_stim_amp(neur.freq)
@@ -465,7 +468,17 @@ class brain(object):
 
                 if neur.super_type == 'motor':
                     try:
-                        mean_v = 20 * (70 + np.mean(np.array(recv[counter])))
+                        #s=0.
+                        #a=np.array(recv[counter])
+                        #for i in range(len(a)):
+                        #    s+=a[i]
+                        #b=s/len(a)
+                        #bb=np.sum(a)
+                        #print len(a)
+                        #b=bb/float(len(a))
+                        b=neur.mod(0.5).v
+                        mean_v=20*(70+b)
+                        #mean_v = 20 * (70 + np.mean(np.array(recv[counter])))
                         if mean_v < 0:
                             mean_v = 0
                     except:
@@ -563,7 +576,7 @@ class brain(object):
 
             if plot_count == self.downSampleFactor:
                 plot_count = 0
-                sleep(0.001)
+                sleep(0.0001)
                 if recording:
                     v.extend(rec_neuron.mod(0.5).v)
                     v_scaled = plot_height - \

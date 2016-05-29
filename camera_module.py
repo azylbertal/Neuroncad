@@ -78,7 +78,7 @@ class Camera(object):
 
                 screen.blit(self.cam_icon, (x, y))
         self.cam.stop()
-
+    #@profile
     def get_stim_amp(self, rf):
 
         if self.online:
