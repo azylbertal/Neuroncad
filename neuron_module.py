@@ -157,7 +157,7 @@ class AP(object):
         self.pos = 0
         self.old_pos = 0
         self.screen = screen
-        self.size = int(self.axon.w * 50)
+        self.size = int(self.axon.w * 30)
 
     def draw_and_advance(self, to_draw):
         self.pos += 1

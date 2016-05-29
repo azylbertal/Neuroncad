@@ -35,7 +35,6 @@ RED = (255, 0, 0)
 BLUE = (0, 0, 255)
 BGCOLOR = WHITE
 
-stdp_max = 5000
 
 
 class RingBuffer():
@@ -116,6 +115,9 @@ class brain(object):
         self.auditories = 0
 
         self.spike_threshold = 0.
+
+        self.stdp = False
+        self.stdp_max = 4000
 
     def __del__(self):
         print "brain object deleted"
@@ -455,8 +457,7 @@ class brain(object):
                     neur.ext_stm.dur = self.step
                     if plot_count==self.downSampleFactor:
                         neur.ext_stm.amp=self.sns.cam.get_stim_amp(neur.rf)
-                    #else:
-                    #    neur.ext_stm.amp = 0#self.sns.cam.get_stim_amp(neur.rf)
+
 
                 if neur.tp == 'auditory' and sensors_init == 500:
                     audio_stim_amp = self.sns.mic.get_stim_amp(neur.freq)
@@ -468,17 +469,9 @@ class brain(object):
 
                 if neur.super_type == 'motor':
                     try:
-                        #s=0.
-                        #a=np.array(recv[counter])
-                        #for i in range(len(a)):
-                        #    s+=a[i]
-                        #b=s/len(a)
-                        #bb=np.sum(a)
-                        #print len(a)
-                        #b=bb/float(len(a))
+
                         b=neur.mod(0.5).v
                         mean_v=20*(70+b)
-                        #mean_v = 20 * (70 + np.mean(np.array(recv[counter])))
                         if mean_v < 0:
                             mean_v = 0
                     except:
@@ -498,16 +491,17 @@ class brain(object):
 
                 if not neur.super_type == 'motor' and max_v > self.spike_threshold:
 
-                    neur.stdp = stdp_max
-                    for n in self.neurons.sprites():
-                        for ax in n.axons:
-                            if ax.end_id == neur.nid:
-                                if n.stdp > 0:
-                                    ax.w += (0.2 - ax.w) * 0.01
-                                else:
-                                    ax.w -= (ax.w - 0.01) * 0.01
+                    if self.stdp:
+                        neur.stdp = self.stdp_max
+                        for n in self.neurons.sprites():
+                            for ax in n.axons:
+                                if ax.end_id == neur.nid:
+                                    if n.stdp > 0:
+                                        ax.w += (0.2 - ax.w) * 0.01
+                                    else:
+                                        ax.w -= (ax.w - 0.01) * 0.01
 
-                                ax.con.weight[0] = ax.w
+                                    ax.con.weight[0] = ax.w
 
                     if neur.fire_counter == 0:
                         neur.fire_counter = fire_image_delay
