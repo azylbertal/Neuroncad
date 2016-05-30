@@ -10,6 +10,8 @@
 * Unpack repository files
 * Install dependencies
 * Connect a USB Webcam and additional peripherals (see Raspberry Pi information below)
+* If running on Raspberry Pi - connect motors and IR distance sensor based on the diagram below (The distance sensor is connected using an SPI ADC IC, the motors are connected using a DC motor driver IC (controled by GPIOs 17, 18, 22, 23).
+
 * Run neuroncad.py
 
 ### Dependencies: ###
