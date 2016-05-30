@@ -12,3 +12,9 @@
 * NEURON with python (see: http://www.davison.webfactional.com/notes/installation-neuron-python/)
 * [pygame](http://www.pygame.org/)
 * [EzText](http://pygame.org/project-EzText-920-.html) is packaged with source
+
+### Raspberry Pi: ###
+
+* Circuit:
+
+![NeuronCAD_bb.png](https://bitbucket.org/repo/aqpXBj/images/3727378928-NeuronCAD_bb.png)
