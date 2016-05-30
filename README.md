@@ -17,15 +17,15 @@
 
 * In order to compile NEURON on Raspberry Pi, first edit /nrn-7.4/src/Random123/features/gccfeatures.h and remove the following lines:
 
-`#if !defined(__x86_64__) && !defined(__i386__) && !defined(__powerpc__)
-#  error "This code has only been tested on x86 and powerpc platforms."
-#include <including_a_nonexistent_file_will_stop_some_compilers_from_continuing_with_a_hopeless_task>
-{ /* maybe an unbalanced brace will terminate the compilation */
- /* Feel free to try the Random123 library on other architectures by changing
- the conditions that reach this error, but you should consider it a
- porting exercise and expect to encounter bugs and deficiencies.
- Please let the authors know of any successes (or failures). */
-#endif`
+`#if !defined(__x86_64__) && !defined(__i386__) && !defined(__powerpc__)`
+`#  error "This code has only been tested on x86 and powerpc platforms."`
+`#include <including_a_nonexistent_file_will_stop_some_compilers_from_continuing_with_a_hopeless_task>`
+`{ /* maybe an unbalanced brace will terminate the compilation */`
+` /* Feel free to try the Random123 library on other architectures by changing`
+` the conditions that reach this error, but you should consider it a`
+` porting exercise and expect to encounter bugs and deficiencies.`
+` Please let the authors know of any successes (or failures). */`
+`#endif`
 
 * Circuit:
 
