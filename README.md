@@ -3,13 +3,20 @@
 * This is an educational tool for system level neuroscience, powered by the [NEURON simulation environment](http://www.neuron.yale.edu/neuron/)
 * May be used in linux-based development boards to create NEURON-based mobile robots
 
-* Please report issues!
+* Please use the issues report system
 
+### Setting up ###
+
+* Unpack repository files
+* Install dependencies
+* Connect a USB Webcam and additional peripherals (see Raspberry Pi information below)
+* Run neuroncad.py
 
 ### Dependencies: ###
 
 
 * NEURON with python (see: http://www.davison.webfactional.com/notes/installation-neuron-python/)
+* Numpy and Scipy
 * [pygame](http://www.pygame.org/)
 * [EzText](http://pygame.org/project-EzText-920-.html) is packaged with source
 
