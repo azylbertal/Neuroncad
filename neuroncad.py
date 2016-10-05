@@ -16,7 +16,7 @@ from time import sleep
 import eztext
 import thread
 from camera_module import Camera
-from mic_module import Mic
+from mic_module2 import Mic
 from neuron_module import Neuron, Axon, AP, pickledNeuron
 
 try:
@@ -98,12 +98,13 @@ class brain(object):
 
         self.tkroot = tk.Tk()
         self.tkroot.withdraw()
-
+        print "Initializing main window"
         self.screen = pygame.display.set_mode((self.width, self.height))
         self.screen.fill(BGCOLOR)
         pygame.display.set_caption("Brain")
 
         neuron.h.load_file("stdrun.hoc")
+
         self.neurons = pygame.sprite.Group()
         self.sns = Sensors(RPI)
 
@@ -175,7 +176,7 @@ class brain(object):
             self.motors += update
 
     def build_loop(self):
-
+        print "Starting build loop"
         buttons = pygame.sprite.Group()
         drawing = False
         downflag = False
