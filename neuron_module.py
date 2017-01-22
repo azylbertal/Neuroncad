@@ -8,7 +8,7 @@ Methods for single neuron simulation and graphics: axons, action potentials
 import pygame
 import math
 import neuron
-from camera_module import receptive_field
+#from camera_module import receptive_field
 
 WHITE = (255, 255, 255)
 RED = (255, 0, 0)
@@ -18,7 +18,7 @@ BLACK = (0, 0, 0)
 
 class Neuron(pygame.sprite.Sprite):
 
-    def __init__(self, x, y, tp, brn, shift=True, nid=None, rf=None, freq=None):
+    def __init__(self, x, y, tp, brn, receptive_field=None, shift=True, nid=None, rf=None, freq=None):
 
         super(Neuron, self).__init__()
         self.screen = brn.screen

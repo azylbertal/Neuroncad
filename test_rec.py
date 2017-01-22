@@ -19,8 +19,16 @@ ax = plt.axes(xlim=(0, 4000), ylim=(5, 2000000))
 line, = ax.plot([], [], lw=2)
 
 pa=pyaudio.PyAudio()
-stream = pa.open(format=pyaudio.paInt16, channels=1, rate=44100, input=True, frames_per_buffer=binn, input_device_index=8) 
 
+dev = None
+for i in range(pa.get_device_count()):
+    if 'Webcam' in pa.get_device_info_by_index(i).get('name'):
+        dev = i
+        break
+        
+stream = pa.open(format=pyaudio.paInt16, channels=1, rate=44100, input=True, frames_per_buffer=binn, input_device_index=dev) 
+
+x=(np.linspace(0, binn-1, binn)*44100.)/binn + 1
 
 def init():
     line.set_data([], [])
@@ -31,7 +39,6 @@ def animate(i):
     y=(np.abs(np.fft.fft(struct.unpack('<'+str(binn)+'h', a))))
     #y=(struct.unpack('<'+str(binn)+'h', a))
     
-    x=(np.linspace(0, binn-1, binn)*44100.)/binn + 1
     if np.max(y)>500000:
         mf=x[y.argmax()]
         if mf<5000:

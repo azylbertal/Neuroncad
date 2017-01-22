@@ -14,10 +14,13 @@ import tkSimpleDialog
 import numpy as np
 from time import sleep
 import eztext
-import thread
-from camera_module import Camera
-from mic_module2 import Mic
 from neuron_module import Neuron, Axon, AP, pickledNeuron
+import multiprocessing
+import ctypes
+import struct
+import pyaudio
+import pygame.camera
+import os
 
 try:
     import RPi.GPIO as io
@@ -35,7 +38,143 @@ RED = (255, 0, 0)
 BLUE = (0, 0, 255)
 BGCOLOR = WHITE
 
+audio_bin=4000
 
+cam_dev = "/dev/video0"
+cam_width = 32
+cam_height = 24
+cam_scale = 8
+cam_gain = 7
+cam_expo = 10
+
+
+def update_buffer(nrns, screen, x, y):
+    print os.getpid()
+    cam.start()
+    pixel_width = cam_scale
+    pixel_height = cam_scale
+    while not shut_down.value:
+        catSurfaceObj = cam.get_image()
+        scaledDown = pygame.transform.scale(
+            catSurfaceObj, (int(cam_width), int(cam_height)))
+        pixArray = pygame.surfarray.pixels3d(scaledDown)
+
+        pixArray[:, :, 0] = pixArray[:, :, 2]
+        pixArray[:, :, 1] = pixArray[:, :, 2]
+
+        np.copyto(img_buffer, pixArray[:, :, 2])
+        cam_icon = pygame.transform.scale(
+            scaledDown, (int(cam_width * cam_scale), int(cam_height * cam_scale)))
+#        if cam_first_image:
+#            cam_first_image = False
+        for neur in nrns:
+            if neur.tp == 'visual':
+                for c in neur.rf:
+                    poly_points = [[c[0] * pixel_width, c[1] * pixel_height], [(c[0] + 1) * pixel_width, c[1] * pixel_height], [(
+                        c[0] + 1) * pixel_width, (c[1] + 1) * pixel_height], [c[0] * pixel_width, (c[1] + 1) * pixel_height]]
+                    cl = (int(255 / (neur.nid + 1)), 255 -
+                          int(255 / (neur.nid + 1)), 255)
+                    pygame.draw.polygon(cam_icon, cl, poly_points, 1)
+
+        screen.blit(cam_icon, (x, y))
+    print 'Stopping camera'
+    cam.stop()
+
+def get_cam_stim_amp(rf):
+
+    if cam_online:
+        vamp = 0
+        pixels = len(rf)
+        for c in rf:
+            vamp += img_buffer[c[0], c[1]]
+        vamp /= pixels
+
+        return vamp / cam_gain
+    else:
+        return 0
+
+
+def receptive_field(brn):
+
+    pixel_width = float(brn.width) / cam_width
+    pixel_height = float(brn.height) / cam_height
+
+    selected = []
+
+    if cam_online:
+        cam.start()
+    going = True
+    pygame.event.set_blocked(pygame.MOUSEMOTION)
+
+    while going:
+        event = pygame.event.poll()
+        (x, y) = pygame.mouse.get_pos()
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            xx = int(x / pixel_width)
+            yy = int(y / pixel_height)
+            selected.append((xx, yy))
+        if event.type == pygame.QUIT:
+            going = False
+        if cam_online:
+            image = cam.get_image()
+            catSurfaceObj = image
+            pix_array = pygame.surfarray.pixels3d(image)
+            pix_array[:, :, 0] = pix_array[:, :, 2]
+            pix_array[:, :, 1] = pix_array[:, :, 2]
+
+            scaledDown = pygame.transform.scale(
+                catSurfaceObj, (int(cam_width), int(cam_height)))
+
+            scaledUp = pygame.transform.scale(
+                scaledDown, (brn.width, brn.height))
+        else:
+            scaledUp = pygame.Surface((brn.width, brn.height))
+        for neur in brn.neurons.sprites():
+            if neur.tp == 'visual':
+                for c in neur.rf:
+                    poly_points = [[c[0] * pixel_width, c[1] * pixel_height], [(c[0] + 1) * pixel_width, c[1] * pixel_height], [(
+                        c[0] + 1) * pixel_width, (c[1] + 1) * pixel_height], [c[0] * pixel_width, (c[1] + 1) * pixel_height]]
+                    cl = (int(255 / (neur.nid + 1)), 255 -
+                          int(255 / (neur.nid + 1)), 255)
+                    pygame.draw.polygon(scaledUp, cl, poly_points, 1)
+        brn.screen.blit(scaledUp, (0, 0))
+        for sel in selected:
+            poly_points = [[sel[0] * pixel_width, sel[1] * pixel_height], [(sel[0] + 1) * pixel_width, sel[1] * pixel_height], [(
+                sel[0] + 1) * pixel_width, (sel[1] + 1) * pixel_height], [sel[0] * pixel_width, (sel[1] + 1) * pixel_height]]
+            pygame.draw.polygon(brn.screen, RED, poly_points)
+        pygame.display.update()
+
+    if cam_online:
+        cam.stop()
+
+    return np.array(selected)
+
+def get_audio_freqs():
+    #global freqs
+    print os.getpid()
+    pa=pyaudio.PyAudio()
+    dev = None
+    for i in range(pa.get_device_count()):
+        if 'Webcam' in pa.get_device_info_by_index(i).get('name'):
+            dev = i
+            break
+    stream = pa.open(format=pyaudio.paInt16, channels=1, rate=44100, input=True, frames_per_buffer=audio_bin, input_device_index=dev) 
+    #print dev           
+    freqs.fill(200.)    
+    while not shut_down.value:
+        a = stream.read(audio_bin, exception_on_overflow = False)
+        np.copyto(freqs, np.abs(np.fft.fft(struct.unpack('<' + str(audio_bin) + 'h', a))))
+        #print freqs[40]
+        #print freqs[40]
+
+def get_mic_stim_amp(freq, threshold, audio_gain):
+    ind = int(round((freq - 1) * (audio_bin / 44100.)))
+    fval = freqs[ind]
+    
+    if fval > threshold:
+        return (fval - threshold) / audio_gain
+    else:
+        return None
 
 class RingBuffer():
 
@@ -55,8 +194,8 @@ class RingBuffer():
 class Sensors(object):
 
     def __init__(self, RPi):
-        self.cam = Camera("/dev/video0", 32, 24, 8, 7)
-        self.mic = Mic(4000, 500000, 100000)
+        #self.cam = Camera("/dev/video0", 32, 24, 8, 7)
+        #self.mic = Mic(4000, 500000, 10000)
 
         if RPi:
             self.spi = SpiSensors([30])
@@ -156,15 +295,10 @@ class brain(object):
         return last_nid
 
     def stop_rec(self):
-        if self.visuals > 0:
-            self.sns.cam.shut_down = True
-            sleep(0.3)
-            self.sns.cam.shut_down = False
+        shut_down.value = True
+        sleep(0.3)
+        shut_down.value = False
 
-        if self.auditories > 0:
-            self.sns.mic.shut_down = True
-            sleep(0.3)
-            self.sns.mic.shut_down = False
 
     def updateCounts(self, tp, update):
 
@@ -328,7 +462,12 @@ class brain(object):
                                             Neuron(x, y, focus.tp, self, nid=nid, freq=int(freq)))
                                         self.updateCounts(focus.tp, 1)
                                         nid += 1
+                                elif focus.tp == 'visual':
+                                    self.neurons.add(
+                                        Neuron(x, y, focus.tp, self, nid=nid, receptive_field = receptive_field))
+                                    self.updateCounts(focus.tp, 1)
                                 else:
+                                    
                                     self.neurons.add(
                                         Neuron(x, y, focus.tp, self, nid=nid))
                                     self.updateCounts(focus.tp, 1)
@@ -383,11 +522,14 @@ class brain(object):
 
         if RPI and self.motors > 0:
             mtrs = Motors()
-        if self.visuals > 0 and self.sns.cam.online:
-            thread.start_new_thread(
-                self.sns.cam.update_buffer, (self.neurons.sprites(), self.screen, self.width - (self.sns.cam.width * self.sns.cam.scale + 10), self.height - (self.sns.cam.width * self.sns.cam.scale + 50)))
-        if self.auditories > 0 and self.sns.mic.online:
-            thread.start_new_thread(self.sns.mic.get_audio_freqs, ())
+        if self.visuals > 0 and cam_online:
+            cam_proc = multiprocessing.Process(target = update_buffer, args = (self.neurons.sprites(), self.screen, self.width - (cam_width * cam_scale + 10), self.height - (cam_width * cam_scale + 50)))
+            cam_proc.start()
+        if self.auditories > 0:# and self.sns.mic.online:
+            #get_audio_freqs(self.sns.mic)
+            mic_proc = multiprocessing.Process(target=get_audio_freqs, args=())
+            mic_proc.start()
+ #           mic_proc.join()
 
         sensors_init = 0
         vmin = -75.
@@ -457,11 +599,11 @@ class brain(object):
                     neur.ext_stm.delay = neuron.h.t
                     neur.ext_stm.dur = self.step
                     if plot_count==self.downSampleFactor:
-                        neur.ext_stm.amp=self.sns.cam.get_stim_amp(neur.rf)
+                        neur.ext_stm.amp=get_cam_stim_amp(neur.rf)
 
 
                 if neur.tp == 'auditory' and sensors_init == 500:
-                    audio_stim_amp = self.sns.mic.get_stim_amp(neur.freq)
+                    audio_stim_amp = get_mic_stim_amp(neur.freq, 500000, 10000)
 
                     if audio_stim_amp is not None:
                         neur.ext_stm.delay = neuron.h.t
@@ -571,7 +713,7 @@ class brain(object):
 
             if plot_count == self.downSampleFactor:
                 plot_count = 0
-                sleep(0.0001)
+                #sleep(0.0001)
                 if recording:
                     v.extend(rec_neuron.mod(0.5).v)
                     v_scaled = plot_height - \
@@ -608,4 +750,30 @@ def main():
     pygame.quit()
 
 if __name__ == "__main__":
+    freqs_base = multiprocessing.Array(ctypes.c_double, audio_bin)
+    freqs = np.frombuffer(freqs_base.get_obj(), dtype=ctypes.c_double)
+    img_buffer_base = multiprocessing.Array(ctypes.c_double, cam_width*cam_height)
+    img_buffer = np.frombuffer(img_buffer_base.get_obj(), dtype=ctypes.c_double)
+    img_buffer=img_buffer.reshape(cam_width, cam_height)
+    shut_down = multiprocessing.Value(ctypes.c_bool, False)
+    
+    if not os.path.exists(cam_dev):
+        print "Camera not detected"
+        cam_online = False
+    else:
+        try:
+            pygame.camera.init()
+        
+            cam = pygame.camera.Camera(cam_dev, (cam_width, cam_height), 'HSV')
+        
+            os.system('v4l2-ctl -d ' + cam_dev +
+                      ' --set-ctrl exposure_auto=1')
+            os.system('v4l2-ctl -d ' + cam_dev +
+                      ' --set-ctrl exposure_absolute=' + str(cam_expo))
+        
+            cam_online = True
+            print "Camera detected"
+        except:
+            cam_online = False
+            print "Camera not detected"
     main()
