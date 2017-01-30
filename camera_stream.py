@@ -47,21 +47,21 @@ if not os.path.exists(cam_dev):
     print "Camera not detected"
     cam_online = False
 else:
-    try:
-        pygame.camera.init()
-    
-        cam = pygame.camera.Camera(cam_dev, (cam_width, cam_height), 'HSV')
-    
-        os.system('v4l2-ctl -d ' + cam_dev +
-                  ' --set-ctrl exposure_auto=1')
-        os.system('v4l2-ctl -d ' + cam_dev +
-                  ' --set-ctrl exposure_absolute=' + str(cam_expo))
-    
-        cam_online = True
-        print "Camera detected"
-    except:
-        cam_online = False
-        print "Camera not detected"
+#    try:
+    pygame.camera.init()
+
+    cam = pygame.camera.Camera(cam_dev, (cam_width, cam_height), 'HSV')
+
+    os.system('v4l2-ctl -d ' + cam_dev +
+              ' --set-ctrl exposure_auto=1')
+    os.system('v4l2-ctl -d ' + cam_dev +
+              ' --set-ctrl exposure_absolute=' + str(cam_expo))
+
+    cam_online = True
+    print "Camera detected"
+#    except:
+#        cam_online = False
+#        print "Camera not detected"
             
 cam.start()
 pixel_width = cam_scale

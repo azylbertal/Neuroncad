@@ -1,3 +1,8 @@
+import sys
+folder = '/home/asaph/anaconda2/lib/python2.7/site-packages'
+if not folder in sys.path:
+    sys.path.append(folder)
+     
 import pygame
 import numpy as np
 from bluetooth import *
