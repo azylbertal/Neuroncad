@@ -1,4 +1,5 @@
 import sys
+from time import sleep
 folder = '/home/asaph/anaconda2/lib/python2.7/site-packages'
 if not folder in sys.path:
     sys.path.append(folder)
@@ -6,6 +7,9 @@ if not folder in sys.path:
 import pygame
 import numpy as np
 from bluetooth import *
+
+w = 100
+h = 100
 
 server_sock=BluetoothSocket( RFCOMM )
 server_sock.bind(("",PORT_ANY))
@@ -28,14 +32,19 @@ client_sock, client_info = server_sock.accept()
 print("Accepted connection from ", client_info)
 
 pygame.init()
-screen = pygame.display.set_mode((100, 100))
-
+screen = pygame.display.set_mode((w, h))
+buff=np.zeros(w*h, dtype='uint8')
 while True:
+    #client_sock.send('1')
+    i=0
+    while i<(w*h):
+        pack = np.fromstring(client_sock.recv(w*h), dtype='uint8')
         
-    img = np.fromstring(client_sock.recv(32*24))
-    if len(img) == 1: break
-    img = np.reshape(img, (32, 24))
-    screen.blit(img, (0, 0))
+        buff[i:(i+len(pack))]=pack
+        i+=len(pack)
+    img = np.reshape(buff, (w, h))
+    
+    pygame.surfarray.blit_array(screen, img.astype('int'))
     pygame.display.update()
 
 print("disconnected")
