@@ -32,6 +32,7 @@ x=(np.linspace(0, binn-1, binn)*44100.)/binn + 1
 
 def init():
     line.set_data([], [])
+    print 'boom'
     return line,
 
 def animate(i):
