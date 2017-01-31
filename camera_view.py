@@ -2,8 +2,8 @@ import pygame
 import numpy as np
 import socket
 
-w = 640
-h = 400
+w = 100
+h = 100
 
 TCP_IP = '192.168.0.103'
 TCP_PORT = 5005
@@ -23,12 +23,10 @@ while True:
     i=0
     while i<(w*h):
         pack = np.fromstring(conn.recv(w*h), dtype='uint8')
-        print len(pack)
         buff[i:(i+len(pack))]=pack
         i+=len(pack)
-    img = np.reshape(buff, (w, h))
     
-    pygame.surfarray.blit_array(screen, img.astype('int'))
+    pygame.surfarray.blit_array(screen, np.reshape(buff, (w, h)).astype('int'))
     pygame.display.update()
 
 print("disconnected")
