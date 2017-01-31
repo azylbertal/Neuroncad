@@ -1,35 +1,19 @@
-import sys
-from time import sleep
-folder = '/home/asaph/anaconda2/lib/python2.7/site-packages'
-if not folder in sys.path:
-    sys.path.append(folder)
-     
 import pygame
 import numpy as np
-from bluetooth import *
+import socket
 
 w = 100
 h = 100
 
-server_sock=BluetoothSocket( RFCOMM )
-server_sock.bind(("",PORT_ANY))
-server_sock.listen(1)
+TCP_IP = '192.168.0.103'
+TCP_PORT = 5005
+BUFFER_SIZE = 1024  
 
-port = server_sock.getsockname()[1]
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+s.bind((TCP_IP, TCP_PORT))
+s.listen(1)
 
-uuid = "94f39d29-7d6d-437d-973b-fba39e49d4ee"
-
-advertise_service( server_sock, "SampleServer",
-                   service_id = uuid,
-                   service_classes = [ uuid, SERIAL_PORT_CLASS ],
-                   profiles = [ SERIAL_PORT_PROFILE ], 
-#                   protocols = [ OBEX_UUID ] 
-                    )
-                   
-print("Waiting for connection on RFCOMM channel %d" % port)
-
-client_sock, client_info = server_sock.accept()
-print("Accepted connection from ", client_info)
+conn, addr = s.accept()
 
 pygame.init()
 screen = pygame.display.set_mode((w, h))
@@ -38,7 +22,7 @@ while True:
     #client_sock.send('1')
     i=0
     while i<(w*h):
-        pack = np.fromstring(client_sock.recv(w*h), dtype='uint8')
+        pack = np.fromstring(conn.recv(w*h), dtype='uint8')
         
         buff[i:(i+len(pack))]=pack
         i+=len(pack)
@@ -48,6 +32,5 @@ while True:
     pygame.display.update()
 
 print("disconnected")
-client_sock.close()
-server_sock.close()
+conn.close()
 print("all done")
