@@ -26,7 +26,5 @@ s.connect((TCP_IP, TCP_PORT))
 while True:
     stat = s.recv(1)
     a = stream.read(audio_bin, exception_on_overflow = False)
-    dat = struct.unpack('<' + str(audio_bin) + 'h', a)
-    print len(dat)
-    print type(dat)
+    dat = np.array(struct.unpack('<' + str(audio_bin) + 'h', a)).tostring()
     s.send(dat)
