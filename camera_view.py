@@ -2,8 +2,8 @@ import pygame
 import numpy as np
 import socket
 
-w = 100
-h = 100
+w = 640
+h = 400
 
 TCP_IP = '192.168.0.103'
 TCP_PORT = 5005

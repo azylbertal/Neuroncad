@@ -13,8 +13,8 @@ s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.connect((TCP_IP, TCP_PORT))
 
 cam_dev = "/dev/video0"
-cam_width = 100
-cam_height = 100
+cam_width = 640
+cam_height = 400
 cam_scale = 8
 cam_gain = 7
 cam_expo = 60
