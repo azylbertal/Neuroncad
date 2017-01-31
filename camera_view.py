@@ -19,11 +19,11 @@ pygame.init()
 screen = pygame.display.set_mode((w, h))
 buff=np.zeros(w*h, dtype='uint8')
 while True:
-    #client_sock.send('1')
+    conn.send('1')
     i=0
     while i<(w*h):
         pack = np.fromstring(conn.recv(w*h), dtype='uint8')
-        
+        print len(pack)
         buff[i:(i+len(pack))]=pack
         i+=len(pack)
     img = np.reshape(buff, (w, h))

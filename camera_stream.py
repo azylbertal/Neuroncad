@@ -44,7 +44,7 @@ cam.start()
 img_buffer=np.zeros((cam_width, cam_height), dtype='uint8')
 
 while True:
-    #stat = sock.recv(1)
+    stat = s.recv(1)
     catSurfaceObj = cam.get_image()
     scaledDown = pygame.transform.scale(
         catSurfaceObj, (int(cam_width), int(cam_height)))
