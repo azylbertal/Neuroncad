@@ -5,7 +5,7 @@ import socket
 w = 100
 h = 100
 
-TCP_IP = '192.168.0.103'
+TCP_IP = '192.168.0.100'
 TCP_PORT = 5005
 BUFFER_SIZE = 1024  
 

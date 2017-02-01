@@ -5,7 +5,7 @@ from matplotlib import animation
 
 audio_bin=4000
 
-TCP_IP = '192.168.0.103'
+TCP_IP = '192.168.0.100'
 TCP_PORT = 5006
 BUFFER_SIZE = 1024  
 
