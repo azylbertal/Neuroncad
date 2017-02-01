@@ -7,7 +7,7 @@ import multiprocessing
 import pyaudio
 import struct
 
-TCP_IP = '192.168.0.103'
+TCP_IP = '192.168.0.100'
 CAMERA_TCP_PORT = 5005
 MIC_TCP_PORT = 5006
 BUFFER_SIZE = 1024
@@ -85,5 +85,8 @@ def mic_stream():
         s.send(dat)
 
 
-multiprocessing.Process(target = camera_stream, args = ())
-multiprocessing.Process(target = mic_stream, args = ())
+cam_proc = multiprocessing.Process(target = camera_stream, args = ())
+mic_proc = multiprocessing.Process(target = mic_stream, args = ())
+
+cam_proc.start()
+mic_proc.start()
