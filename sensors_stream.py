@@ -6,10 +6,18 @@ import socket
 import multiprocessing
 import pyaudio
 import struct
+import RPi.GPIO as io
+
+FORWARD_LEFT = 17
+BACKWARD_LEFT = 18
+FORWARD_RIGHT = 23
+BACKWARD_RIGHT = 22
 
 TCP_IP = '192.168.0.100'
 CAMERA_TCP_PORT = 5005
 MIC_TCP_PORT = 5006
+LEFT_MOTOR_PORT = 5007
+RIGHT_MOTOR_PORT = 5008
 BUFFER_SIZE = 1024
 
 def camera_stream():
@@ -85,8 +93,69 @@ def mic_stream():
         s.send(dat)
 
 
+def motor_control():
+
+    io.setmode(io.BCM)
+    io.setup(FORWARD_LEFT, io.OUT)
+    io.setup(BACKWARD_LEFT, io.OUT)
+    io.setup(FORWARD_RIGHT, io.OUT)
+    io.setup(BACKWARD_RIGHT, io.OUT)
+
+    forward_left_pwm = io.PWM(FORWARD_LEFT, 500)
+    backward_left_pwm = io.PWM(BACKWARD_LEFT, 500)
+    forward_right_pwm = io.PWM(FORWARD_RIGHT, 500)
+    backward_right_pwm = io.PWM(BACKWARD_RIGHT, 500)
+
+    forward_left_pwm.start(0)
+    backward_left_pwm.start(0)
+    forward_right_pwm.start(0)
+    backward_right_pwm.start(0)
+
+    s_left = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s_left.connect((TCP_IP, LEFT_MOTOR_PORT))
+    s_right = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s_right.connect((TCP_IP, RIGHT_MOTOR_PORT))
+
+    while True:
+        left_dat=s_left.recv(8)
+        left_power=struct.unpack("d", left_dat)
+        right_dat=s_right.recv(8)
+        right_power=struct.unpack("d", right_dat)
+
+        if abs(left_power) > 0.00001:
+            if left_power > 0:
+                if left_power > 100:
+                    left_power = 100
+                backward_left_pwm.ChangeDutyCycle(0)
+                forward_left_pwm.ChangeDutyCycle(int(left_power))
+            else:
+                if left_power < -100:
+                    left_power = -100
+                forward_left_pwm.ChangeDutyCycle(0)
+                backward_left_pwm.ChangeDutyCycle(-int(left_power))
+        else:
+            forward_left_pwm.ChangeDutyCycle(0)
+            backward_right_pwm.ChangeDutyCycle(0)
+
+        if abs(right_power) > 0.00001:
+            if right_power > 0:
+                if right_power > 100:
+                    right_power = 100
+                backward_right_pwm.ChangeDutyCycle(0)
+                forward_right_pwm.ChangeDutyCycle(int(right_power))
+            else:
+                if right_power < -100:
+                    right_power = -100
+                forward_right_pwm.ChangeDutyCycle(0)
+                backward_right_pwm.ChangeDutyCycle(-int(right_power))
+        else:
+            forward_right_pwm.ChangeDutyCycle(0)
+            backward_right_pwm.ChangeDutyCycle(0)
+            
 cam_proc = multiprocessing.Process(target = camera_stream, args = ())
 mic_proc = multiprocessing.Process(target = mic_stream, args = ())
+motor_proc = multiprocessing.Process(target = motor_control, args = ())
 
 cam_proc.start()
 mic_proc.start()
+motor_proc.start()
