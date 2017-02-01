@@ -17,8 +17,7 @@ s_right.bind((TCP_IP, RIGHT_MOTOR_PORT))
 s_right.listen(1)
 
 conn_left, addr_left = s_left.accept()
-conn_right, addr_right = s_left.accept()
-
+conn_right, addr_right = s_right.accept()
 conn_left.send(struct.pack("d", 20.0))
 conn_right.send(struct.pack("d", 20.0))
 
