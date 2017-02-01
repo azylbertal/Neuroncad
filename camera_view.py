@@ -1,6 +1,7 @@
 import pygame
 import numpy as np
 import socket
+import numpy
 
 w = 100
 h = 100
@@ -18,6 +19,9 @@ conn, addr = s.accept()
 pygame.init()
 screen = pygame.display.set_mode((w, h))
 buff=np.zeros(w*h, dtype='uint8')
+im_array=np.zeros((w, h, 3))
+
+
 while True:
     conn.send('1')
     i=0
@@ -25,8 +29,11 @@ while True:
         pack = np.fromstring(conn.recv(w*h), dtype='uint8')
         buff[i:(i+len(pack))]=pack
         i+=len(pack)
-    
-    pygame.surfarray.blit_array(screen, np.reshape(buff, (w, h)).astype('int'))
+    im=np.reshape(buff, (w, h))
+    im_array[:,:,0]= np.reshape(buff, (w, h))
+    im_array[:,:,1]= np.reshape(buff, (w, h))
+    im_array[:,:,2]= np.reshape(buff, (w, h))
+    pygame.surfarray.blit_array(screen, im_array.astype('int'))
     pygame.display.update()
 
 print("disconnected")
