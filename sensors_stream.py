@@ -118,9 +118,11 @@ def motor_control():
 
     while True:
         left_dat=s_left.recv(8)
-        left_power=struct.unpack("d", left_dat)
         right_dat=s_right.recv(8)
-        right_power=struct.unpack("d", right_dat)
+	if left_dat == None or right_dat == None:
+	    break
+        left_power=struct.unpack("d", left_dat)[0]
+        right_power=struct.unpack("d", right_dat)[0]
 
         if abs(left_power) > 0.00001:
             if left_power > 0:
@@ -151,6 +153,9 @@ def motor_control():
         else:
             forward_right_pwm.ChangeDutyCycle(0)
             backward_right_pwm.ChangeDutyCycle(0)
+    s_left.close()
+    s_right.close()
+    io.cleanup()
             
 cam_proc = multiprocessing.Process(target = camera_stream, args = ())
 mic_proc = multiprocessing.Process(target = mic_stream, args = ())
