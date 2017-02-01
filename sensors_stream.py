@@ -26,8 +26,8 @@ def camera_stream():
     s.connect((TCP_IP, CAMERA_TCP_PORT))
     
     cam_dev = "/dev/video0"
-    cam_width = 100
-    cam_height = 100
+    cam_width = 32
+    cam_height = 24
     cam_expo = 60
     
     if not os.path.exists(cam_dev):
@@ -158,9 +158,9 @@ def motor_control():
     io.cleanup()
             
 cam_proc = multiprocessing.Process(target = camera_stream, args = ())
-mic_proc = multiprocessing.Process(target = mic_stream, args = ())
-motor_proc = multiprocessing.Process(target = motor_control, args = ())
+#mic_proc = multiprocessing.Process(target = mic_stream, args = ())
+#motor_proc = multiprocessing.Process(target = motor_control, args = ())
 
 cam_proc.start()
-mic_proc.start()
-motor_proc.start()
+#mic_proc.start()
+#motor_proc.start()
