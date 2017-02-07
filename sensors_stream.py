@@ -7,13 +7,13 @@ import multiprocessing
 import pyaudio
 import struct
 import RPi.GPIO as io
+from time import sleep
 
 FORWARD_LEFT = 17
 BACKWARD_LEFT = 18
 FORWARD_RIGHT = 23
 BACKWARD_RIGHT = 22
 
-TCP_IP = '192.168.0.100'
 CAMERA_TCP_PORT = 5005
 MIC_TCP_PORT = 5006
 LEFT_MOTOR_PORT = 5007
@@ -54,7 +54,8 @@ def camera_stream():
     img_buffer=np.zeros((cam_width, cam_height), dtype='uint8')
     
     while True:
-        s.recv(1)
+        if s.recv(1) == 'c':
+	    break
         catSurfaceObj = cam.get_image()
         scaledDown = pygame.transform.scale(
             catSurfaceObj, (int(cam_width), int(cam_height)))
@@ -65,6 +66,7 @@ def camera_stream():
         np.copyto(img_buffer, pixArray[:, :, 2])
         dat = img_buffer.tostring()
         s.send(dat)
+    s.close()
 
 
 def mic_stream():
@@ -157,6 +159,14 @@ def motor_control():
     s_right.close()
     io.cleanup()
             
+s_broad = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+s_broad.bind(('', 50000))
+
+print 'waiting for server'
+TCP_IP, wherefrom = s_broad.recvfrom(1500, 0)
+print 'server ip:'+TCP_IP
+sleep(2)
+
 cam_proc = multiprocessing.Process(target = camera_stream, args = ())
 #mic_proc = multiprocessing.Process(target = mic_stream, args = ())
 #motor_proc = multiprocessing.Process(target = motor_control, args = ())
