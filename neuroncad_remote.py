@@ -19,9 +19,9 @@ import multiprocessing
 import ctypes
 import struct
 import pyaudio
-import pygame.camera
 import os
 import socket
+import subprocess
 
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
@@ -29,7 +29,6 @@ RED = (255, 0, 0)
 BLUE = (0, 0, 255)
 BGCOLOR = WHITE
 
-TCP_IP = '192.168.0.100'
 CAMERA_TCP_PORT = 5005
 BUFFER_SIZE = 1024  
 
@@ -83,7 +82,7 @@ def update_buffer(nrns, screen, x, y):
                     pygame.draw.polygon(cam_icon, cl, poly_points, 1)
 
         screen.blit(cam_icon, (x, y))
-
+    
 def get_cam_stim_amp(rf):
 
     vamp = 0
@@ -731,6 +730,9 @@ def main():
 
     brn = brain(downSampleFactor, 0.1)
     brn.build_loop()
+    print 'closing camera stream'
+    conn_cam.send('c')
+    conn_cam.close()
 
     pygame.quit()
 
@@ -743,6 +745,17 @@ if __name__ == "__main__":
     img_buffer=img_buffer.reshape(cam_width, cam_height)
     shut_down = multiprocessing.Value(ctypes.c_bool, False)
 
+    arg='hostname -I'  # Linux command to retrieve ip addresses.
+    p=subprocess.Popen(arg,shell=True,stdout=subprocess.PIPE)
+    data = p.communicate()  # Get data from 'p terminal'.
+    TCP_IP=data[0].split()[0]
+
+    s_broad = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    s_broad.bind(('', 0))
+    s_broad.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+    print TCP_IP
+    s_broad.sendto(TCP_IP, ('<broadcast>', 50000))
+    print 'waiting for robot' 
     s_cam = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s_cam.bind((TCP_IP, CAMERA_TCP_PORT))
     s_cam.listen(1)

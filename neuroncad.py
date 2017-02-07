@@ -40,7 +40,7 @@ BGCOLOR = WHITE
 
 audio_bin=4000
 
-cam_dev = "/dev/video0"
+cam_dev = "/dev/video1"
 cam_width = 32
 cam_height = 24
 cam_scale = 8
