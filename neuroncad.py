@@ -506,9 +506,12 @@ class brain(object):
             if update_screen:
                 update_screen = False
                 self.screen.fill(BGCOLOR)
+                
                 self.neurons.draw(self.screen)
+
                 for neur in self.neurons.sprites():
                     neur.draw_axons()
+                    neur.draw_label()
                 buttons.draw(self.screen)
                 wightbx.draw(self.screen)
                 pygame.draw.rect(self.screen, RED, focus.rect, 2)

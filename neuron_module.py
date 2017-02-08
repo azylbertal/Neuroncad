@@ -20,6 +20,8 @@ class Neuron(pygame.sprite.Sprite):
 
     def __init__(self, x, y, tp, brn, receptive_field=None, shift=True, nid=None, rf=None, freq=None):
 
+        self.font = pygame.font.SysFont("monospace", 15)
+
         super(Neuron, self).__init__()
         self.screen = brn.screen
 
@@ -27,6 +29,7 @@ class Neuron(pygame.sprite.Sprite):
         self.freq = None
         self.stdp = 0
         self.mod = neuron.h.Section()
+        self.label=self.font.render('', 1, (0,0,0))
         if tp == 'excitatory':
             self.image = pygame.image.load("static/pyramidal.bmp").convert()
             self.super_type = 'neuron'
@@ -54,6 +57,7 @@ class Neuron(pygame.sprite.Sprite):
             self.auditory_stm = 0
             self.super_type = 'sensor'
             self.freq = freq
+            self.label = self.font.render(str(freq)+ ' Hz', 1, (0,0,0))
 
         elif tp == 'visual':
 
@@ -91,13 +95,15 @@ class Neuron(pygame.sprite.Sprite):
             self.ext_stm.amp = 0
         self.fire_counter = 0
         self.axons = []
-
+        
     def draw_axons(self):
         recs = []
         for axon in self.axons:
             recs.append(axon.draw(self.screen))
         return recs
-
+    def draw_label(self):
+        self.screen.blit(self.label, (self.rect.x, self.rect.y+100))
+        
     def pickled_axons(self):
         paxons = []
         for axon in self.axons:
