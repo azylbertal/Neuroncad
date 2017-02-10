@@ -18,7 +18,7 @@ BLACK = (0, 0, 0)
 
 class Neuron(pygame.sprite.Sprite):
 
-    def __init__(self, x, y, tp, brn, receptive_field=None, shift=True, nid=None, rf=None, freq=None):
+    def __init__(self, x, y, tp, brn, receptive_field=None, shift=True, nid=None, rf=None, freq=None, axis=None):
 
         self.font = pygame.font.SysFont("monospace", 15)
 
@@ -52,6 +52,12 @@ class Neuron(pygame.sprite.Sprite):
         elif tp == 'irsensor':
             self.image = pygame.image.load("static/ir_sensor.bmp").convert()
             self.super_type = 'sensor'
+        elif tp == 'gyro':
+            self.image = pygame.image.load("static/gyro.bmp").convert()
+            self.super_type = 'sensor'
+            self.axis=axis
+            self.label=self.font.render(self.axis, 1, (0,0,0))
+
         elif tp == 'auditory':
             self.image = pygame.image.load("static/auditory.bmp").convert()
             self.auditory_stm = 0

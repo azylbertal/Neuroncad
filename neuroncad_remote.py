@@ -18,7 +18,6 @@ from neuron_module import Neuron, Axon, AP, pickledNeuron
 import multiprocessing
 import ctypes
 import struct
-import pyaudio
 import os
 import socket
 import subprocess
@@ -30,6 +29,11 @@ BLUE = (0, 0, 255)
 BGCOLOR = WHITE
 
 CAMERA_TCP_PORT = 5005
+MIC_TCP_PORT = 5006
+LEFT_MOTOR_PORT = 5007
+RIGHT_MOTOR_PORT = 5008
+PROX_TCP_PORT = 5009
+
 BUFFER_SIZE = 1024  
 
 cam_width = 32
@@ -40,6 +44,40 @@ cam_expo = 10
 
 audio_bin=4000
 
+prox_gain = 30.
+
+class selectionDialog:
+
+    def __init__(self, parent, options):
+
+        top = self.top = tk.Toplevel(parent)
+        self.lists={}
+        self.var={}
+        self.options=options
+        c=0
+        for k in sorted(options.keys()):
+            tk.Label(top, text=k).grid(row=0, column=c)
+            self.var[k]=tk.StringVar(top)
+            self.var[k].set(options[k][0]) # default value
+            self.lists[k]=apply(tk.OptionMenu, (top, self.var[k]) + tuple(options[k]))
+            self.lists[k].grid(row=1, column=c)
+            c+=1
+
+        b = tk.Button(top, text="OK", command=self.ok)
+        b.grid(row=2, column=0, columnspan=2)
+    def ok(self):
+
+        self.res={}
+        for k in self.options.keys():
+            self.res[k]=self.var[k].get()
+        self.top.destroy()
+
+def read_sensors():
+    while not shut_down.value:
+        conn_prox.send('1')
+        prox_dat = conn_prox.recv(2)
+        prox_val.value = struct.unpack("H", prox_dat)[0]
+        
 def update_buffer(nrns, screen, x, y):
     print os.getpid()
 
@@ -154,18 +192,16 @@ def receptive_field(brn):
 def get_audio_freqs():
     #global freqs
     print os.getpid()
-    pa=pyaudio.PyAudio()
-    dev = None
-    for i in range(pa.get_device_count()):
-        if 'Webcam' in pa.get_device_info_by_index(i).get('name'):
-            dev = i
-            break
-    stream = pa.open(format=pyaudio.paInt16, channels=1, rate=44100, input=True, frames_per_buffer=audio_bin, input_device_index=dev) 
-    #print dev           
     freqs.fill(200.)    
     while not shut_down.value:
-        a = stream.read(audio_bin, exception_on_overflow = False)
-        np.copyto(freqs, np.abs(np.fft.fft(struct.unpack('<' + str(audio_bin) + 'h', a))))
+        buff=np.zeros(audio_bin, dtype='int16')
+        conn_mic.send('1')
+        i=0
+        while i<audio_bin:
+            pack = np.fromstring(conn_mic.recv(audio_bin), dtype='int16')
+            buff[i:(i+len(pack))]=pack
+            i+=len(pack)
+        np.copyto(freqs, np.abs(np.fft.fft(struct.unpack('<' + str(audio_bin) + 'h', buff))))
         #print freqs[40]
         #print freqs[40]
 
@@ -244,14 +280,37 @@ class brain(object):
         self.motors = 0
         self.visuals = 0
         self.auditories = 0
-
+        self.sensors = 0
         self.spike_threshold = 0.
 
         self.stdp = False
         self.stdp_max = 4000
 
     def __del__(self):
+        print 'closing camera stream'
+        conn_cam.send('c')
+        conn_cam.close()
+        s_cam.close()
+
+        print 'closing mic stream'
+        conn_mic.send('c')
+        conn_mic.close()
+        s_mic.close()
+        
+        print 'closing sensor streams'
+        conn_prox.send('c')
+        sleep(0.5)
+        conn_prox.close()
+        s_prox.close()
+        
+        print 'closing motor stream'
+        conn_lmotor.close()
+        conn_rmotor.close()
+        s_lmotor.close()
+        s_rmotor.close()
+        
         print "brain object deleted"
+        
 
     def get_neurons_info(self):
         neurons = []
@@ -265,6 +324,7 @@ class brain(object):
         self.visuals = 0
         self.motors = 0
         self.auditories = 0
+        self.sensors = 0
         last_nid = 0
         for counter, neur in enumerate(inf):
             nrn = Neuron(neur.rect.x, neur.rect.y, neur.tp, self,
@@ -297,8 +357,10 @@ class brain(object):
             self.visuals += update
         if tp == 'auditory':
             self.auditories += update
-        if tp == 'rightforward' or tp == 'rightbackward' or tp == 'leftforward' or tp == 'leftbackward':
+        if tp == 'motor':
             self.motors += update
+        if tp == 'irsensor' or tp == 'gyro' or tp == 'accel' or tp == 'magnet':
+            self.sensors += update
 
     def build_loop(self):
         print "Starting build loop"
@@ -325,24 +387,22 @@ class brain(object):
         buttons.add(visual_button)
         auditory_button = Button('static/auditory.bmp', 220, 10, 'auditory')
         buttons.add(auditory_button)
+        irsensor_button = Button('static/ir_sensor.bmp', 290, 10, 'irsensor')
+        buttons.add(irsensor_button)
+        motor_button = Button('static/motor.bmp', 360, 10, 'motor')
+        buttons.add(motor_button)
+        gyro_button = Button('static/gyro.bmp', 440, 10, 'gyro')
+        buttons.add(gyro_button)
+        magnet_button = Button('static/magnet.bmp', 500, 10, 'magnet')
+        buttons.add(magnet_button)
+        accel_button = Button('static/accel.bmp', 560, 10, 'accel')
+        buttons.add(accel_button)
+
+
         save_button = Button('static/save.bmp', self.width - 100, 10)
         buttons.add(save_button)
         load_button = Button('static/load.bmp', self.width - 50, 10)
         buttons.add(load_button)
-        irsensor_button = Button('static/ir_sensor.bmp', 290, 10, 'irsensor')
-        buttons.add(irsensor_button)
-        rightforward_button = Button(
-            'static/rightforward.bmp', 360, 10, 'rightforward')
-        buttons.add(rightforward_button)
-        rightbackward_button = Button(
-            'static/rightbackward.bmp', 450, 10, 'rightbackward')
-        buttons.add(rightbackward_button)
-        leftforward_button = Button(
-            'static/leftforward.bmp', 540, 10, 'leftforward')
-        buttons.add(leftforward_button)
-        leftbackward_button = Button(
-            'static/leftbackward.bmp', 630, 10, 'leftbackward')
-        buttons.add(leftbackward_button)
 
         focus = excitatory_button
 
@@ -427,16 +487,22 @@ class brain(object):
                         elif auditory_button.rect.collidepoint([x, y]):
                             focus = auditory_button
 
-                        if rightforward_button.rect.collidepoint([x, y]):
-                            focus = rightforward_button
-                        elif rightbackward_button.rect.collidepoint([x, y]):
-                            focus = rightbackward_button
-                        elif leftforward_button.rect.collidepoint([x, y]):
-                            focus = leftforward_button
-                        elif leftbackward_button.rect.collidepoint([x, y]):
-                            focus = leftbackward_button
+                        elif motor_button.rect.collidepoint([x, y]):
+                            focus = motor_button
+#                        elif rightbackward_button.rect.collidepoint([x, y]):
+#                            focus = rightbackward_button
+#                        elif leftforward_button.rect.collidepoint([x, y]):
+#                            focus = leftforward_button
+#                        elif leftbackward_button.rect.collidepoint([x, y]):
+#                            focus = leftbackward_button
                         elif irsensor_button.rect.collidepoint([x, y]):
                             focus = irsensor_button
+                        elif gyro_button.rect.collidepoint([x, y]):
+                            focus = gyro_button
+                        elif magnet_button.rect.collidepoint([x, y]):
+                            focus = magnet_button
+                        elif accel_button.rect.collidepoint([x, y]):
+                            focus = accel_button
 
                         if y > 150 and y < self.height - 100:
                             on_neuron = False
@@ -457,6 +523,26 @@ class brain(object):
                                     self.neurons.add(
                                         Neuron(x, y, focus.tp, self, nid=nid, receptive_field = receptive_field))
                                     self.updateCounts(focus.tp, 1)
+                                    nid+=1
+                                elif focus.tp == 'motor':
+                                    options={'Motor':['Left', 'Right'], 'Direction':['Forward', 'Backward']}
+                                    d = selectionDialog(self.tkroot, options)
+                                    self.tkroot.wait_window(d.top)
+                                    motor_type = (d.res['Motor']+d.res['Direction']).lower()
+                                    self.neurons.add(
+                                        Neuron(x, y, motor_type, self, nid=nid))
+                                    self.updateCounts(focus.tp, 1)
+                                    nid+=1
+                                elif focus.tp == 'gyro':
+                                    options={'Axis':['X', 'Y', 'Z'], 'Direction':['Positive', 'Negative']}
+                                    d = selectionDialog(self.tkroot, options)
+                                    self.tkroot.wait_window(d.top)
+                                    gyro_type = (d.res['Axis']+d.res['Direction']).lower()
+                                    self.neurons.add(
+                                        Neuron(x, y, focus.tp, self, nid=nid, axis=gyro_type))
+                                    self.updateCounts(focus.tp, 1)
+                                    nid+=1
+
                                 else:
                                     
                                     self.neurons.add(
@@ -500,6 +586,7 @@ class brain(object):
                 self.neurons.draw(self.screen)
                 for neur in self.neurons.sprites():
                     neur.draw_axons()
+                    neur.draw_label()
                 buttons.draw(self.screen)
                 wightbx.draw(self.screen)
                 pygame.draw.rect(self.screen, RED, focus.rect, 2)
@@ -511,16 +598,15 @@ class brain(object):
     #@profile
     def run_loop(self):
 
-#        if self.motors > 0:
-#            mtrs = Motors()
         if self.visuals > 0:
             cam_proc = multiprocessing.Process(target = update_buffer, args = (self.neurons.sprites(), self.screen, self.width - (cam_width * cam_scale + 10), self.height - (cam_width * cam_scale + 50)))
             cam_proc.start()
-        if self.auditories > 0:# and self.sns.mic.online:
-            #get_audio_freqs(self.sns.mic)
+        if self.auditories > 0:
             mic_proc = multiprocessing.Process(target=get_audio_freqs, args=())
             mic_proc.start()
- #           mic_proc.join()
+        if self.sensors > 0:
+            sensors_proc = multiprocessing.Process(target=read_sensors, args=())
+            sensors_proc.start()
 
         sensors_init = 0
         vmin = -75.
@@ -582,9 +668,10 @@ class brain(object):
                     max_v = 0.
 
                 if neur.tp == 'irsensor' and sensors_init == 500:
+                    
                     neur.ext_stm.delay = neuron.h.t
                     neur.ext_stm.dur = self.step
-                    neur.ext_stm.amp = self.sns.spi.get_stim_amp(0)
+                    neur.ext_stm.amp = prox_val.value / prox_gain
 
                 if neur.tp == 'visual' and sensors_init == 500:
                     neur.ext_stm.delay = neuron.h.t
@@ -651,7 +738,8 @@ class brain(object):
                     neur.fire_counter -= 1
 
             if self.motors > 0:
-                mtrs.update_power(left_power, right_power)
+                conn_lmotor.send(struct.pack("d", left_power))
+                conn_rmotor.send(struct.pack("d", right_power))
 
             event = pygame.event.poll()
             (x, y) = pygame.mouse.get_pos()
@@ -730,9 +818,7 @@ def main():
 
     brn = brain(downSampleFactor, 0.1)
     brn.build_loop()
-    print 'closing camera stream'
-    conn_cam.send('c')
-    conn_cam.close()
+
 
     pygame.quit()
 
@@ -744,6 +830,8 @@ if __name__ == "__main__":
     img_buffer = np.frombuffer(img_buffer_base.get_obj(), dtype=ctypes.c_double)
     img_buffer=img_buffer.reshape(cam_width, cam_height)
     shut_down = multiprocessing.Value(ctypes.c_bool, False)
+    
+    prox_val = multiprocessing.Value(ctypes.c_uint16, 0)
 
     arg='hostname -I'  # Linux command to retrieve ip addresses.
     p=subprocess.Popen(arg,shell=True,stdout=subprocess.PIPE)
@@ -756,10 +844,32 @@ if __name__ == "__main__":
     print TCP_IP
     s_broad.sendto(TCP_IP, ('<broadcast>', 50000))
     print 'waiting for robot' 
+    s_broad.close()
+    
     s_cam = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s_cam.bind((TCP_IP, CAMERA_TCP_PORT))
     s_cam.listen(1)
-
     conn_cam, addr_cam = s_cam.accept()
+
+    s_mic = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s_mic.bind((TCP_IP, MIC_TCP_PORT))
+    s_mic.listen(1)
+    conn_mic, addr_mic = s_mic.accept()
+    
+    s_lmotor = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s_lmotor.bind((TCP_IP, LEFT_MOTOR_PORT))
+    s_lmotor.listen(1)
+    conn_lmotor, addr_lmotor = s_lmotor.accept()
+
+    s_rmotor = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s_rmotor.bind((TCP_IP, RIGHT_MOTOR_PORT))
+    s_rmotor.listen(1)
+    conn_rmotor, addr_rmotor = s_rmotor.accept()
+
+    s_prox = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s_prox.bind((TCP_IP, PROX_TCP_PORT))
+    s_prox.listen(1)
+    conn_prox, addr_prox = s_prox.accept()
+    print 'finished connecting'
     
     main()
