@@ -12,7 +12,7 @@ import Tkinter as tk
 import tkFileDialog
 import tkSimpleDialog
 import numpy as np
-from time import sleep
+from time import sleep, time
 import eztext
 from neuron_module import Neuron, Axon, AP, pickledNeuron
 import multiprocessing
@@ -32,7 +32,7 @@ CAMERA_TCP_PORT = 5005
 MIC_TCP_PORT = 5006
 LEFT_MOTOR_PORT = 5007
 RIGHT_MOTOR_PORT = 5008
-PROX_TCP_PORT = 5009
+SENS_TCP_PORT = 5009
 
 BUFFER_SIZE = 1024  
 
@@ -45,12 +45,17 @@ cam_expo = 10
 audio_bin=4000
 
 prox_gain = 30.
+gyro_gain=100#0.1
+magnet_gain=20#10.0
+
 
 class selectionDialog:
 
     def __init__(self, parent, options):
 
         top = self.top = tk.Toplevel(parent)
+        top.title('Select properties')
+        
         self.lists={}
         self.var={}
         self.options=options
@@ -73,11 +78,44 @@ class selectionDialog:
         self.top.destroy()
 
 def read_sensors():
-    while not shut_down.value:
-        conn_prox.send('1')
-        prox_dat = conn_prox.recv(2)
-        prox_val.value = struct.unpack("H", prox_dat)[0]
+
+    print 'Calibrating gyros'
+    calibx=np.zeros(100)
+    caliby=np.zeros(100)
+    calibz=np.zeros(100)
+    
+    for i in range(100):
+        conn_sens.send('1')
+        sens_dat = conn_sens.recv(38)
+        calibx[i] = struct.unpack("f", sens_dat[2:6])[0]
+        caliby[i] = struct.unpack("f", sens_dat[6:10])[0]
+        calibz[i] = struct.unpack("f", sens_dat[10:14])[0]
         
+    x_rest=np.mean(calibx)
+    y_rest=np.mean(caliby)
+    z_rest=np.mean(calibz)
+    print 'End calibration'
+
+    while not shut_down.value:
+        conn_sens.send('1')
+        sens_dat = conn_sens.recv(38)
+        
+        prox_val.value = struct.unpack("H", sens_dat[0:2])[0]
+
+        gyrox.value = struct.unpack("f", sens_dat[2:6])[0]-x_rest
+        gyroy.value = struct.unpack("f", sens_dat[6:10])[0]-y_rest
+        gyroz.value = struct.unpack("f", sens_dat[10:14])[0]-z_rest
+
+        accelx.value = struct.unpack("f", sens_dat[14:18])[0]
+        accely.value = struct.unpack("f", sens_dat[18:22])[0]
+        accelz.value = struct.unpack("f", sens_dat[22:26])[0]
+
+        magnetx.value = struct.unpack("f", sens_dat[26:30])[0]
+        magnety.value = struct.unpack("f", sens_dat[30:34])[0]
+        magnetz.value = struct.unpack("f", sens_dat[34:38])[0]
+        
+#        print(accelx.value, accely.value, accelz.value)
+
 def update_buffer(nrns, screen, x, y):
     print os.getpid()
 
@@ -92,11 +130,17 @@ def update_buffer(nrns, screen, x, y):
 #            catSurfaceObj, (int(cam_width), int(cam_height)))
 #        pixArray = pygame.surfarray.pixels3d(scaledDown)
         conn_cam.send('1')
+        start_time=time()
         i=0
+        packs=0
         while i<(cam_width*cam_height):
             pack = np.fromstring(conn_cam.recv(cam_width*cam_height), dtype='uint8')
             buff[i:(i+len(pack))]=pack
             i+=len(pack)
+            packs+=1
+        timing = time()-start_time
+        if timing > 0.1:
+            print timing, packs
         np.copyto(img_buffer, np.reshape(buff, (cam_width, cam_height)))
         im_array[:,:,0]= img_buffer
         im_array[:,:,1]= img_buffer
@@ -298,10 +342,10 @@ class brain(object):
         s_mic.close()
         
         print 'closing sensor streams'
-        conn_prox.send('c')
+        conn_sens.send('c')
         sleep(0.5)
-        conn_prox.close()
-        s_prox.close()
+        conn_sens.close()
+        s_sens.close()
         
         print 'closing motor stream'
         conn_lmotor.close()
@@ -346,6 +390,8 @@ class brain(object):
         return last_nid
 
     def stop_rec(self):
+        conn_lmotor.send(struct.pack("d", 0))
+        conn_rmotor.send(struct.pack("d", 0))
         shut_down.value = True
         sleep(0.3)
         shut_down.value = False
@@ -489,12 +535,6 @@ class brain(object):
 
                         elif motor_button.rect.collidepoint([x, y]):
                             focus = motor_button
-#                        elif rightbackward_button.rect.collidepoint([x, y]):
-#                            focus = rightbackward_button
-#                        elif leftforward_button.rect.collidepoint([x, y]):
-#                            focus = leftforward_button
-#                        elif leftbackward_button.rect.collidepoint([x, y]):
-#                            focus = leftbackward_button
                         elif irsensor_button.rect.collidepoint([x, y]):
                             focus = irsensor_button
                         elif gyro_button.rect.collidepoint([x, y]):
@@ -540,6 +580,15 @@ class brain(object):
                                     gyro_type = (d.res['Axis']+d.res['Direction']).lower()
                                     self.neurons.add(
                                         Neuron(x, y, focus.tp, self, nid=nid, axis=gyro_type))
+                                    self.updateCounts(focus.tp, 1)
+                                    nid+=1
+                                elif focus.tp == 'magnet':
+                                    options={'Axis':['Magnitude', 'X', 'Y', 'Z'], 'Direction':['Positive', 'Negative']}
+                                    d = selectionDialog(self.tkroot, options)
+                                    self.tkroot.wait_window(d.top)
+                                    magnet_type = (d.res['Axis']+d.res['Direction']).lower()
+                                    self.neurons.add(
+                                        Neuron(x, y, focus.tp, self, nid=nid, axis=magnet_type))
                                     self.updateCounts(focus.tp, 1)
                                     nid+=1
 
@@ -651,7 +700,7 @@ class brain(object):
             neur.draw_axons()
 
         pygame.display.flip()
-
+        motor_resting = True
         while True:
             plot_count += 1
             if sensors_init < 500:
@@ -673,6 +722,40 @@ class brain(object):
                     neur.ext_stm.dur = self.step
                     neur.ext_stm.amp = prox_val.value / prox_gain
 
+                if neur.tp == 'gyro' and sensors_init == 500:
+                    
+                    neur.ext_stm.delay = neuron.h.t
+                    neur.ext_stm.dur = self.step
+                    if 'positive' in neur.axis:
+                        m = 1.
+                    else:
+                        m = -1.
+                        
+                    if neur.axis[0]=='x':
+                            neur.ext_stm.amp=(abs(gyrox.value+m*abs(gyrox.value))/2.)/gyro_gain
+                    elif neur.axis[0]=='y':
+                            neur.ext_stm.amp=(abs(gyroy.value+m*abs(gyroy.value))/2.)/gyro_gain
+                    elif neur.axis[0]=='z':
+                            neur.ext_stm.amp=(abs(gyroz.value+m*abs(gyroz.value))/2.)/gyro_gain
+
+                if neur.tp == 'magnet' and sensors_init == 500:
+                    
+                    neur.ext_stm.delay = neuron.h.t
+                    neur.ext_stm.dur = self.step
+                    if 'positive' in neur.axis:
+                        m = 1.
+                    else:
+                        m = -1.
+                    print magnetx.value
+                    if neur.axis[0]=='x':
+                            neur.ext_stm.amp=(abs(magnetx.value+m*abs(magnetx.value))/2.)/magnet_gain
+                    elif neur.axis[0]=='y':
+                            neur.ext_stm.amp=(abs(magnety.value+m*abs(magnety.value))/2.)/magnet_gain
+                    elif neur.axis[0]=='z':
+                            neur.ext_stm.amp=(abs(magnetz.value+m*abs(magnetz.value))/2.)/magnet_gain
+                    elif 'magnitude' in neur.axis:
+                            neur.ext_stm.amp=np.sqrt(magnetx.value**2 + magnety.value**2 + magnetz.value**2)/(magnet_gain*5)
+                         
                 if neur.tp == 'visual' and sensors_init == 500:
                     neur.ext_stm.delay = neuron.h.t
                     neur.ext_stm.dur = self.step
@@ -693,7 +776,7 @@ class brain(object):
 
                         b=neur.mod(0.5).v
                         mean_v=20*(70+b)
-                        if mean_v < 0:
+                        if mean_v < 1e-4:
                             mean_v = 0
                     except:
                         mean_v = 0.
@@ -737,9 +820,13 @@ class brain(object):
 
                     neur.fire_counter -= 1
 
-            if self.motors > 0:
-                conn_lmotor.send(struct.pack("d", left_power))
-                conn_rmotor.send(struct.pack("d", right_power))
+            if self.motors > 0 and not (motor_resting and left_power == 0 and right_power == 0):
+                conn_lmotor.send(struct.pack("H", left_power))
+                conn_rmotor.send(struct.pack("H", right_power))
+                if left_power == 0 and right_power == 0:
+                    motor_resting = True
+                else:
+                    motor_resting = False
 
             event = pygame.event.poll()
             (x, y) = pygame.mouse.get_pos()
@@ -833,18 +920,30 @@ if __name__ == "__main__":
     
     prox_val = multiprocessing.Value(ctypes.c_uint16, 0)
 
-    arg='hostname -I'  # Linux command to retrieve ip addresses.
-    p=subprocess.Popen(arg,shell=True,stdout=subprocess.PIPE)
-    data = p.communicate()  # Get data from 'p terminal'.
-    TCP_IP=data[0].split()[0]
+    gyrox = multiprocessing.Value(ctypes.c_float, 0)
+    gyroy = multiprocessing.Value(ctypes.c_float, 0)
+    gyroz = multiprocessing.Value(ctypes.c_float, 0)
 
-    s_broad = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    s_broad.bind(('', 0))
-    s_broad.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-    print TCP_IP
-    s_broad.sendto(TCP_IP, ('<broadcast>', 50000))
-    print 'waiting for robot' 
-    s_broad.close()
+    accelx = multiprocessing.Value(ctypes.c_float, 0)
+    accely = multiprocessing.Value(ctypes.c_float, 0)
+    accelz = multiprocessing.Value(ctypes.c_float, 0)
+
+    magnetx = multiprocessing.Value(ctypes.c_float, 0)
+    magnety = multiprocessing.Value(ctypes.c_float, 0)
+    magnetz = multiprocessing.Value(ctypes.c_float, 0)
+
+#    arg='hostname -I'  # Linux command to retrieve ip addresses.
+#    p=subprocess.Popen(arg,shell=True,stdout=subprocess.PIPE)
+#    data = p.communicate()  # Get data from 'p terminal'.
+#    TCP_IP=data[0].split()[0]
+    TCP_IP='10.42.0.1'
+#    s_broad = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+#    s_broad.bind(('', 0))
+#    s_broad.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+#    print TCP_IP
+#    s_broad.sendto(TCP_IP, ('<broadcast>', 50000))
+#    print 'waiting for robot' 
+#    s_broad.close()
     
     s_cam = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s_cam.bind((TCP_IP, CAMERA_TCP_PORT))
@@ -866,10 +965,10 @@ if __name__ == "__main__":
     s_rmotor.listen(1)
     conn_rmotor, addr_rmotor = s_rmotor.accept()
 
-    s_prox = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s_prox.bind((TCP_IP, PROX_TCP_PORT))
-    s_prox.listen(1)
-    conn_prox, addr_prox = s_prox.accept()
+    s_sens = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s_sens.bind((TCP_IP, SENS_TCP_PORT))
+    s_sens.listen(1)
+    conn_sens, addr_sens = s_sens.accept()
     print 'finished connecting'
     
     main()

@@ -57,6 +57,11 @@ class Neuron(pygame.sprite.Sprite):
             self.super_type = 'sensor'
             self.axis=axis
             self.label=self.font.render(self.axis, 1, (0,0,0))
+        elif tp == 'magnet':
+            self.image = pygame.image.load("static/magnet.bmp").convert()
+            self.super_type = 'sensor'
+            self.axis=axis
+            self.label=self.font.render(self.axis, 1, (0,0,0))
 
         elif tp == 'auditory':
             self.image = pygame.image.load("static/auditory.bmp").convert()
@@ -133,7 +138,6 @@ class pickledNeuron(object):
 class Axon(object):
 
     def __init__(self, startp, endp, points, tp, weight, start_id, end_id, time_step, spike_threshold, interp=True):
-
         self.cl = BLACK
         self.start_id = start_id
         self.end_id = end_id
@@ -147,14 +151,14 @@ class Axon(object):
         self.syn = neuron.h.ExpSyn(endp.mod(0.5))
         self.w = weight
         self.tp = tp
-        if tp == 'excitatory' or tp == 'irsensor' or tp == 'visual' or tp == 'auditory':
-            self.syn.tau = 4
-            self.cl = BLUE
-            self.syn.e = 0.0
-        elif tp == 'inhibitory':
+        if tp == 'inhibitory':
             self.syn.tau = 20
             self.cl = RED
             self.syn.e = -90.0
+        else:
+            self.syn.tau = 4
+            self.cl = BLUE
+            self.syn.e = 0.0
         self.con = neuron.h.NetCon(startp.mod(
             0.5)._ref_v, self.syn, spike_threshold, self.len * time_step, self.w, sec=startp.mod)
 
