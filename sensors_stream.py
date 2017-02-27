@@ -8,6 +8,7 @@ import pyaudio
 import struct
 import RPi.GPIO as io
 import spidev
+import pickle
 import Adafruit_LSM303
 from time import sleep
 from smbus import SMBus
@@ -169,8 +170,8 @@ def motor_control():
 	
 	if left_dat == None or right_dat == None or len(left_dat)==0 or len(right_dat)==0:
 	    break
-        left_power=struct.unpack("H", left_dat)[0]
-        right_power=struct.unpack("H", right_dat)[0]
+        left_power=struct.unpack("h", left_dat)[0]
+        right_power=struct.unpack("h", right_dat)[0]
         if abs(left_power) > 0:
             if left_power > 0:
 #                if left_power > 100:
@@ -231,6 +232,10 @@ def motor_control():
 
 def sensors_str():
 
+    f=open('calib.ini', 'r')
+    cal = pickle.load(f)
+    f.close()
+
     if b.read_byte_data(LGD, LGD_WHOAMI_ADDRESS) == LGD_WHOAMI_CONTENTS:
         print 'L3GD20H detected successfully on I2C bus '+str(busNum)+'.'
     else:
@@ -256,17 +261,17 @@ def sensors_str():
 
 	(accel, mag) = lsm303.read()
 	gyro = getGyro()
-	gyrox_str = struct.pack("f", gyro[0])        
-	gyroy_str = struct.pack("f", gyro[1])        
-	gyroz_str = struct.pack("f", gyro[2])        
+	gyrox_str = struct.pack("f", gyro[0] - cal['gyro'][0])        
+	gyroy_str = struct.pack("f", gyro[1] - cal['gyro'][1])        
+	gyroz_str = struct.pack("f", gyro[2] - cal['gyro'][2])        
 
 	accelx_str = struct.pack("f", accel[0])        
 	accely_str = struct.pack("f", accel[1])        
 	accelz_str = struct.pack("f", accel[2])        
 
-	magnetx_str = struct.pack("f", mag[0])        
-	magnety_str = struct.pack("f", mag[1])        
-	magnetz_str = struct.pack("f", mag[2])        
+	magnetx_str = struct.pack("f", mag[0] - cal['mag'][0])        
+	magnety_str = struct.pack("f", mag[1] - cal['mag'][1])        
+	magnetz_str = struct.pack("f", mag[2] - cal['mag'][2])        
 
 	s_sens.send(prox_str + gyrox_str + gyroy_str + gyroz_str + accelx_str + accely_str + accelz_str + magnetx_str + magnety_str + magnetz_str)
         sleep(0.01)
