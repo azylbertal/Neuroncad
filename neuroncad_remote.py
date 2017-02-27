@@ -79,22 +79,22 @@ class selectionDialog:
 
 def read_sensors():
 
-    print 'Calibrating gyros'
-    calibx=np.zeros(100)
-    caliby=np.zeros(100)
-    calibz=np.zeros(100)
-    
-    for i in range(100):
-        conn_sens.send('1')
-        sens_dat = conn_sens.recv(38)
-        calibx[i] = struct.unpack("f", sens_dat[2:6])[0]
-        caliby[i] = struct.unpack("f", sens_dat[6:10])[0]
-        calibz[i] = struct.unpack("f", sens_dat[10:14])[0]
-        
-    x_rest=np.mean(calibx)
-    y_rest=np.mean(caliby)
-    z_rest=np.mean(calibz)
-    print 'End calibration'
+#    print 'Calibrating gyros'
+#    calibx=np.zeros(100)
+#    caliby=np.zeros(100)
+#    calibz=np.zeros(100)
+#    
+#    for i in range(100):
+#        conn_sens.send('1')
+#        sens_dat = conn_sens.recv(38)
+#        calibx[i] = struct.unpack("f", sens_dat[2:6])[0]
+#        caliby[i] = struct.unpack("f", sens_dat[6:10])[0]
+#        calibz[i] = struct.unpack("f", sens_dat[10:14])[0]
+#        
+#    x_rest=np.mean(calibx)
+#    y_rest=np.mean(caliby)
+#    z_rest=np.mean(calibz)
+#    print 'End calibration'
 
     while not shut_down.value:
         conn_sens.send('1')
@@ -102,19 +102,18 @@ def read_sensors():
         
         prox_val.value = struct.unpack("H", sens_dat[0:2])[0]
 
-        gyrox.value = struct.unpack("f", sens_dat[2:6])[0]-x_rest
-        gyroy.value = struct.unpack("f", sens_dat[6:10])[0]-y_rest
-        gyroz.value = struct.unpack("f", sens_dat[10:14])[0]-z_rest
+        gyrox.value = struct.unpack("f", sens_dat[2:6])[0]#-x_rest
+        gyroy.value = struct.unpack("f", sens_dat[6:10])[0]#-y_rest
+        gyroz.value = struct.unpack("f", sens_dat[10:14])[0]#-z_rest
 
         accelx.value = struct.unpack("f", sens_dat[14:18])[0]
         accely.value = struct.unpack("f", sens_dat[18:22])[0]
         accelz.value = struct.unpack("f", sens_dat[22:26])[0]
 
         magnetx.value = struct.unpack("f", sens_dat[26:30])[0]
-        magnety.value = struct.unpack("f", sens_dat[30:34])[0]
-        magnetz.value = struct.unpack("f", sens_dat[34:38])[0]
+        magnetz.value = struct.unpack("f", sens_dat[30:34])[0]
+        magnety.value = struct.unpack("f", sens_dat[34:38])[0]
         
-#        print(accelx.value, accely.value, accelz.value)
 
 def update_buffer(nrns, screen, x, y):
     print os.getpid()
@@ -819,10 +818,15 @@ class brain(object):
                 if neur.fire_counter > 0:
 
                     neur.fire_counter -= 1
-
+            if left_power > 500:
+                left_power = 500
+            if right_power > 500:
+                right_power = 500
+            if left_power < 0 or right_power < 0:
+                print left_power, right_power                
             if self.motors > 0 and not (motor_resting and left_power == 0 and right_power == 0):
-                conn_lmotor.send(struct.pack("H", left_power))
-                conn_rmotor.send(struct.pack("H", right_power))
+                conn_lmotor.send(struct.pack("h", left_power))
+                conn_rmotor.send(struct.pack("h", right_power))
                 if left_power == 0 and right_power == 0:
                     motor_resting = True
                 else:
