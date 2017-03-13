@@ -20,7 +20,6 @@ import ctypes
 import struct
 import os
 import socket
-import subprocess
 
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
@@ -46,7 +45,8 @@ audio_bin=4000
 
 prox_gain = 30.
 gyro_gain=100#0.1
-magnet_gain=20#10.0
+magnet_gain=15#10.0
+accel_gain=10
 
 
 class selectionDialog:
@@ -470,10 +470,16 @@ class brain(object):
             if event.type == pygame.KEYUP:
                 update_screen = True
 
+            if event.type == pygame.MOUSEMOTION:
+                if downflag:
+                    drawing = True
+                    pts = []
+
+                    downflag = False
+
             if event.type == pygame.MOUSEBUTTONDOWN:
+                update_screen = True
                 mouse_buttons = pygame.mouse.get_pressed()
-                if mouse_buttons[0]:
-                    downflag = True
                 if mouse_buttons[2]:
                     for neur in self.neurons.sprites():
                         if neur.rect.collidepoint([x, y]):
@@ -491,136 +497,138 @@ class brain(object):
                             self.neurons.remove(neur)
                             self.updateCounts(neur.tp, -1)
                             del neur
-
-            if event.type == pygame.MOUSEMOTION:
-                if downflag:
-                    drawing = True
-                    pts = []
-
-                    downflag = False
-
-            if event.type == pygame.MOUSEBUTTONUP:
-                update_screen = True
                 if mouse_buttons[0]:
-                    if not drawing:
 
-                        if run_button.rect.collidepoint([x, y]):
-                            self.run_loop()
-                        elif exit_button.rect.collidepoint([x, y]):
-                            return 0
-                        elif save_button.rect.collidepoint([x, y]):
-                            file_path = tkFileDialog.asksaveasfilename()
-                            if file_path:
-                                fl = open(file_path, 'w')
-                                info = self.get_neurons_info()
-                                pickle.dump(info, fl)
-                                fl.close()
-                        elif load_button.rect.collidepoint([x, y]):
-                            file_path = tkFileDialog.askopenfilename()
-                            if file_path:
-                                fl = open(file_path, 'r')
-                                inf = pickle.load(fl)
-                                nid = self.set_neurons_info(inf) + 1
-                                fl.close()
+                    if run_button.rect.collidepoint([x, y]):
+                        self.run_loop()
+                    elif exit_button.rect.collidepoint([x, y]):
+                        return 0
+                    elif save_button.rect.collidepoint([x, y]):
+                        file_path = tkFileDialog.asksaveasfilename()
+                        if file_path:
+                            fl = open(file_path, 'w')
+                            info = self.get_neurons_info()
+                            pickle.dump(info, fl)
+                            fl.close()
+                    elif load_button.rect.collidepoint([x, y]):
+                        file_path = tkFileDialog.askopenfilename()
+                        if file_path:
+                            fl = open(file_path, 'r')
+                            inf = pickle.load(fl)
+                            nid = self.set_neurons_info(inf) + 1
+                            fl.close()
 
-                        elif excitatory_button.rect.collidepoint([x, y]):
-                            focus = excitatory_button
-                        elif inhibitory_button.rect.collidepoint([x, y]):
-                            focus = inhibitory_button
-                        elif visual_button.rect.collidepoint([x, y]):
-                            focus = visual_button
-                        elif auditory_button.rect.collidepoint([x, y]):
-                            focus = auditory_button
+                    elif excitatory_button.rect.collidepoint([x, y]):
+                        focus = excitatory_button
+                    elif inhibitory_button.rect.collidepoint([x, y]):
+                        focus = inhibitory_button
+                    elif visual_button.rect.collidepoint([x, y]):
+                        focus = visual_button
+                    elif auditory_button.rect.collidepoint([x, y]):
+                        focus = auditory_button
 
-                        elif motor_button.rect.collidepoint([x, y]):
-                            focus = motor_button
-                        elif irsensor_button.rect.collidepoint([x, y]):
-                            focus = irsensor_button
-                        elif gyro_button.rect.collidepoint([x, y]):
-                            focus = gyro_button
-                        elif magnet_button.rect.collidepoint([x, y]):
-                            focus = magnet_button
-                        elif accel_button.rect.collidepoint([x, y]):
-                            focus = accel_button
+                    elif motor_button.rect.collidepoint([x, y]):
+                        focus = motor_button
+                    elif irsensor_button.rect.collidepoint([x, y]):
+                        focus = irsensor_button
+                    elif gyro_button.rect.collidepoint([x, y]):
+                        focus = gyro_button
+                    elif magnet_button.rect.collidepoint([x, y]):
+                        focus = magnet_button
+                    elif accel_button.rect.collidepoint([x, y]):
+                        focus = accel_button
 
-                        if y > 150 and y < self.height - 100:
-                            on_neuron = False
-                            for counter, neur in enumerate(self.neurons.sprites()):
-                                if neur.rect.collidepoint([x, y]):
-                                    on_neuron = True
+                    if y > 150 and y < self.height - 100:
+                        on_neuron = False
+                        for counter, neur in enumerate(self.neurons.sprites()):
+                            if neur.rect.collidepoint([x, y]):
+                                on_neuron = True
 
-                            if not on_neuron:
-                                if focus.tp == 'auditory':
-                                    freq = tkSimpleDialog.askstring(
-                                        'Auditory cell', 'Frequency (Hz): ')
-                                    if freq is not None:
-                                        self.neurons.add(
-                                            Neuron(x, y, focus.tp, self, nid=nid, freq=int(freq)))
-                                        self.updateCounts(focus.tp, 1)
-                                        nid += 1
-                                elif focus.tp == 'visual':
+                        if not on_neuron:
+                            if focus.tp == 'auditory':
+                                freq = tkSimpleDialog.askstring(
+                                    'Auditory cell', 'Frequency (Hz): ')
+                                if freq is not None:
                                     self.neurons.add(
-                                        Neuron(x, y, focus.tp, self, nid=nid, receptive_field = receptive_field))
-                                    self.updateCounts(focus.tp, 1)
-                                    nid+=1
-                                elif focus.tp == 'motor':
-                                    options={'Motor':['Left', 'Right'], 'Direction':['Forward', 'Backward']}
-                                    d = selectionDialog(self.tkroot, options)
-                                    self.tkroot.wait_window(d.top)
-                                    motor_type = (d.res['Motor']+d.res['Direction']).lower()
-                                    self.neurons.add(
-                                        Neuron(x, y, motor_type, self, nid=nid))
-                                    self.updateCounts(focus.tp, 1)
-                                    nid+=1
-                                elif focus.tp == 'gyro':
-                                    options={'Axis':['X', 'Y', 'Z'], 'Direction':['Positive', 'Negative']}
-                                    d = selectionDialog(self.tkroot, options)
-                                    self.tkroot.wait_window(d.top)
-                                    gyro_type = (d.res['Axis']+d.res['Direction']).lower()
-                                    self.neurons.add(
-                                        Neuron(x, y, focus.tp, self, nid=nid, axis=gyro_type))
-                                    self.updateCounts(focus.tp, 1)
-                                    nid+=1
-                                elif focus.tp == 'magnet':
-                                    options={'Axis':['Magnitude', 'X', 'Y', 'Z'], 'Direction':['Positive', 'Negative']}
-                                    d = selectionDialog(self.tkroot, options)
-                                    self.tkroot.wait_window(d.top)
-                                    magnet_type = (d.res['Axis']+d.res['Direction']).lower()
-                                    self.neurons.add(
-                                        Neuron(x, y, focus.tp, self, nid=nid, axis=magnet_type))
-                                    self.updateCounts(focus.tp, 1)
-                                    nid+=1
-
-                                else:
-                                    
-                                    self.neurons.add(
-                                        Neuron(x, y, focus.tp, self, nid=nid))
+                                        Neuron(x, y, focus.tp, self, nid=nid, freq=int(freq)))
                                     self.updateCounts(focus.tp, 1)
                                     nid += 1
+                            elif focus.tp == 'visual':
+                                self.neurons.add(
+                                    Neuron(x, y, focus.tp, self, nid=nid, receptive_field = receptive_field))
+                                self.updateCounts(focus.tp, 1)
+                                nid+=1
+                            elif focus.tp == 'motor':
+                                options={'Motor':['Left', 'Right'], 'Direction':['Forward', 'Backward']}
+                                d = selectionDialog(self.tkroot, options)
+                                self.tkroot.wait_window(d.top)
+                                motor_type = (d.res['Motor']+d.res['Direction']).lower()
+                                self.neurons.add(
+                                    Neuron(x, y, motor_type, self, nid=nid))
+                                self.updateCounts(focus.tp, 1)
+                                nid+=1
+                            elif focus.tp == 'gyro':
+                                options={'Axis':['X', 'Y', 'Z'], 'Direction':['Positive', 'Negative']}
+                                d = selectionDialog(self.tkroot, options)
+                                self.tkroot.wait_window(d.top)
+                                gyro_type = (d.res['Axis']+d.res['Direction']).lower()
+                                self.neurons.add(
+                                    Neuron(x, y, focus.tp, self, nid=nid, axis=gyro_type))
+                                self.updateCounts(focus.tp, 1)
+                                nid+=1
+                            elif focus.tp == 'accel':
+                                options={'Axis':['X', 'Y', 'Z', 'Magnitude'], 'Direction':['Positive', 'Negative']}
+                                d = selectionDialog(self.tkroot, options)
+                                self.tkroot.wait_window(d.top)
+                                accel_type = (d.res['Axis']+d.res['Direction']).lower()
+                                self.neurons.add(
+                                    Neuron(x, y, focus.tp, self, nid=nid, axis=accel_type))
+                                self.updateCounts(focus.tp, 1)
+                                nid+=1
 
-                    else:
-                        axon_start = False
-                        axon_end = False
-                        for counter, neur in enumerate(self.neurons.sprites()):
-                            if neur.rect.collidepoint(pts[0]) and not neur.super_type == 'motor':
-                                start_nrn = counter
-                                axon_start = True
-                            if neur.rect.collidepoint(pts[len(pts) - 1]):
-                                end_nrn = counter
-                                axon_end = True
+                            elif focus.tp == 'magnet':
+                                options={'Axis':['X', 'Y', 'Z', 'Magnitude'], 'Direction':['Positive', 'Negative']}
+                                d = selectionDialog(self.tkroot, options)
+                                self.tkroot.wait_window(d.top)
+                                magnet_type = (d.res['Axis']+d.res['Direction']).lower()
+                                self.neurons.add(
+                                    Neuron(x, y, focus.tp, self, nid=nid, axis=magnet_type))
+                                self.updateCounts(focus.tp, 1)
+                                nid+=1
 
-                        if (axon_start and axon_end):
-                            tp = self.neurons.sprites()[start_nrn].tp
-                            w = float(wightbx.value)
-                            start_id = self.neurons.sprites()[start_nrn].nid
-                            end_id = self.neurons.sprites()[end_nrn].nid
-                            self.neurons.sprites()[start_nrn].axons.append(Axon(self.neurons.sprites()[
-                                start_nrn], self.neurons.sprites()[end_nrn], pts, tp, w, start_id, end_id, self.step, self.spike_threshold))
+                            else:
+                                
+                                self.neurons.add(
+                                    Neuron(x, y, focus.tp, self, nid=nid))
+                                self.updateCounts(focus.tp, 1)
+                                nid += 1
+                        else:
+                            downflag = True
+            if event.type == pygame.MOUSEBUTTONUP:
+                update_screen = True
+                if drawing:
+                    axon_start = False
+                    axon_end = False
+                    for counter, neur in enumerate(self.neurons.sprites()):
+                        if neur.rect.collidepoint(pts[0]) and not neur.super_type == 'motor':
+                            start_nrn = counter
+                            axon_start = True
+                        if neur.rect.collidepoint(pts[len(pts) - 1]):
+                            end_nrn = counter
+                            axon_end = True
+    
+                    if (axon_start and axon_end):
+                        tp = self.neurons.sprites()[start_nrn].tp
+                        w = float(wightbx.value)
+                        start_id = self.neurons.sprites()[start_nrn].nid
+                        end_id = self.neurons.sprites()[end_nrn].nid
+                        self.neurons.sprites()[start_nrn].axons.append(Axon(self.neurons.sprites()[
+                            start_nrn], self.neurons.sprites()[end_nrn], pts, tp, w, start_id, end_id, self.step, self.spike_threshold))
+    
+                    pts = []
+                    drawing = False
 
-                        pts = []
-                        drawing = False
-
-                    downflag = False
+                downflag = False
 
             if drawing:
                 update_screen = True
@@ -737,6 +745,25 @@ class brain(object):
                     elif neur.axis[0]=='z':
                             neur.ext_stm.amp=(abs(gyroz.value+m*abs(gyroz.value))/2.)/gyro_gain
 
+                if neur.tp == 'accel' and sensors_init == 500:
+                    
+                    neur.ext_stm.delay = neuron.h.t
+                    neur.ext_stm.dur = self.step
+                    if 'positive' in neur.axis:
+                        m = 1.
+                    else:
+                        m = -1.
+                    print accelx.value
+                    if neur.axis[0]=='x':
+                            neur.ext_stm.amp=(abs(accelx.value+m*abs(accelx.value))/2.)/accel_gain
+                    elif neur.axis[0]=='y':
+                            neur.ext_stm.amp=(abs(accely.value+m*abs(accely.value))/2.)/accel_gain
+                    elif neur.axis[0]=='z':
+                            neur.ext_stm.amp=(abs(accelz.value+m*abs(accelz.value))/2.)/accel_gain
+
+                    elif 'magnitude' in neur.axis:
+                            neur.ext_stm.amp=np.sqrt(accelx.value**2 + accely.value**2 + accelz.value**2)/(accel_gain)                    
+
                 if neur.tp == 'magnet' and sensors_init == 500:
                     
                     neur.ext_stm.delay = neuron.h.t
@@ -745,7 +772,6 @@ class brain(object):
                         m = 1.
                     else:
                         m = -1.
-                    print magnetx.value
                     if neur.axis[0]=='x':
                             neur.ext_stm.amp=(abs(magnetx.value+m*abs(magnetx.value))/2.)/magnet_gain
                     elif neur.axis[0]=='y':
@@ -818,16 +844,24 @@ class brain(object):
                 if neur.fire_counter > 0:
 
                     neur.fire_counter -= 1
-            if left_power > 500:
-                left_power = 500
-            if right_power > 500:
-                right_power = 500
-            if left_power < 0 or right_power < 0:
-                print left_power, right_power                
-            if self.motors > 0 and not (motor_resting and left_power == 0 and right_power == 0):
-                conn_lmotor.send(struct.pack("h", left_power))
-                conn_rmotor.send(struct.pack("h", right_power))
-                if left_power == 0 and right_power == 0:
+
+                        
+#            if left_power > 500:
+#                left_power = 500
+#            if right_power > 500:
+#                right_power = 500
+            if self.motors > 0 and (abs(left_power) >= 50 or abs(right_power) >= 50 or not motor_resting):
+                quant_left = 20*int(round((left_power*5)/500.))
+                if quant_left > 100 : quant_left = 100
+                if quant_left < -100 : quant_left = -100
+
+                quant_right = 20*int(round((right_power*5)/500.))
+                if quant_right > 100 : quant_right = 100
+                if quant_right < -100 : quant_right = -100
+
+                conn_lmotor.send(struct.pack("h", quant_left))
+                conn_rmotor.send(struct.pack("h", quant_right))
+                if abs(left_power) < 50 and abs(right_power) < 50:
                     motor_resting = True
                 else:
                     motor_resting = False
@@ -839,13 +873,15 @@ class brain(object):
 
                 return 0
 
+#            if event.type == pygame.MOUSEBUTTONDOWN:
+#                downflag = True
+#                mouse_buttons = pygame.mouse.get_pressed()
+#            if event.type == pygame.MOUSEMOTION:
+#                if downflag:
+#                    downflag = False
             if event.type == pygame.MOUSEBUTTONDOWN:
-                downflag = True
                 mouse_buttons = pygame.mouse.get_pressed()
-            if event.type == pygame.MOUSEMOTION:
-                if downflag:
-                    downflag = False
-            if event.type == pygame.MOUSEBUTTONUP:
+
                 if stop_button.rect.collidepoint([x, y]):
                     self.stop_rec()
                     return 0
@@ -865,7 +901,7 @@ class brain(object):
                             buttons.draw(self.screen)
                             recording = True
 
-                downflag = False
+#                downflag = False
 
             for counter, neur in enumerate(self.neurons.sprites()):
                 recv[counter].resize(0)
@@ -905,7 +941,7 @@ class brain(object):
 
 def main():
 
-    downSampleFactor = 10.
+    downSampleFactor = 5.
 
     brn = brain(downSampleFactor, 0.1)
     brn.build_loop()

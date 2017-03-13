@@ -57,6 +57,12 @@ class Neuron(pygame.sprite.Sprite):
             self.super_type = 'sensor'
             self.axis=axis
             self.label=self.font.render(self.axis, 1, (0,0,0))
+        elif tp == 'accel':
+            self.image = pygame.image.load("static/accel.bmp").convert()
+            self.super_type = 'sensor'
+            self.axis=axis
+            self.label=self.font.render(self.axis, 1, (0,0,0))
+
         elif tp == 'magnet':
             self.image = pygame.image.load("static/magnet.bmp").convert()
             self.super_type = 'sensor'
