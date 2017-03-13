@@ -149,15 +149,15 @@ def motor_control():
     io.setup(FORWARD_RIGHT, io.OUT)
     io.setup(BACKWARD_RIGHT, io.OUT)
 
-#    forward_left_pwm = io.PWM(FORWARD_LEFT, 500)
-#    backward_left_pwm = io.PWM(BACKWARD_LEFT, 500)
-#    forward_right_pwm = io.PWM(FORWARD_RIGHT, 500)
-#    backward_right_pwm = io.PWM(BACKWARD_RIGHT, 500)
+    forward_left_pwm = io.PWM(FORWARD_LEFT, 500)
+    backward_left_pwm = io.PWM(BACKWARD_LEFT, 500)
+    forward_right_pwm = io.PWM(FORWARD_RIGHT, 500)
+    backward_right_pwm = io.PWM(BACKWARD_RIGHT, 500)
 
-#    forward_left_pwm.start(0)
-#    backward_left_pwm.start(0)
-#    forward_right_pwm.start(0)
-#    backward_right_pwm.start(0)
+    forward_left_pwm.start(0)
+    backward_left_pwm.start(0)
+    forward_right_pwm.start(0)
+    backward_right_pwm.start(0)
     s_left = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s_left.connect((TCP_IP, LEFT_MOTOR_PORT))
     sleep(1)
@@ -176,54 +176,54 @@ def motor_control():
             if left_power > 0:
 #                if left_power > 100:
 #                    left_power = 100
-#                backward_left_pwm.ChangeDutyCycle(0)
-#                forward_left_pwm.ChangeDutyCycle(int(left_power))
-		io.output(BACKWARD_LEFT, 0)
-		io.output(FORWARD_LEFT, 1)
+                backward_left_pwm.ChangeDutyCycle(0)
+                forward_left_pwm.ChangeDutyCycle(left_power)
+#		io.output(BACKWARD_LEFT, 0)
+#		io.output(FORWARD_LEFT, 1)
             else:
 #                if left_power < -100:
 #                    left_power = -100
-#                forward_left_pwm.ChangeDutyCycle(0)
-#                backward_left_pwm.ChangeDutyCycle(-int(left_power))
-		io.output(FORWARD_LEFT, 0)
-		io.output(BACKWARD_LEFT, 1)
+                forward_left_pwm.ChangeDutyCycle(0)
+                backward_left_pwm.ChangeDutyCycle(-left_power)
+#		io.output(FORWARD_LEFT, 0)
+#		io.output(BACKWARD_LEFT, 1)
 
         else:
-#            forward_left_pwm.ChangeDutyCycle(0)
-#            backward_right_pwm.ChangeDutyCycle(0)
-	    io.output(FORWARD_LEFT, 0)
-	    io.output(BACKWARD_LEFT, 0)
+            forward_left_pwm.ChangeDutyCycle(0)
+            backward_left_pwm.ChangeDutyCycle(0)
+#	    io.output(FORWARD_LEFT, 0)
+#	    io.output(BACKWARD_LEFT, 0)
 
         if abs(right_power) > 0:
             if right_power > 0:
 #                if right_power > 100:
 #                    right_power = 100
-#                backward_right_pwm.ChangeDutyCycle(0)
-#                forward_right_pwm.ChangeDutyCycle(int(right_power))
-		io.output(BACKWARD_RIGHT, 0)
-		io.output(FORWARD_RIGHT, 1)
+                backward_right_pwm.ChangeDutyCycle(0)
+                forward_right_pwm.ChangeDutyCycle(right_power)
+#		io.output(BACKWARD_RIGHT, 0)
+#		io.output(FORWARD_RIGHT, 1)
             else:
 #                if right_power < -100:
 #                    right_power = -100
-#                forward_right_pwm.ChangeDutyCycle(0)
-#                backward_right_pwm.ChangeDutyCycle(-int(right_power))
-		io.output(FORWARD_RIGHT, 0)
-		io.output(BACKWARD_RIGHT, 1)
+                forward_right_pwm.ChangeDutyCycle(0)
+                backward_right_pwm.ChangeDutyCycle(-right_power)
+#		io.output(FORWARD_RIGHT, 0)
+#		io.output(BACKWARD_RIGHT, 1)
         else:
-	    io.output(FORWARD_RIGHT, 0)
-	    io.output(BACKWARD_RIGHT, 0)
+#	    io.output(FORWARD_RIGHT, 0)
+#	    io.output(BACKWARD_RIGHT, 0)
 
-#            forward_right_pwm.ChangeDutyCycle(0)
-#            backward_right_pwm.ChangeDutyCycle(0)
+            forward_right_pwm.ChangeDutyCycle(0)
+            backward_right_pwm.ChangeDutyCycle(0)
 
-    io.output(FORWARD_LEFT, 0)
-    io.output(BACKWARD_LEFT, 0)
-    io.output(FORWARD_RIGHT, 0)
-    io.output(BACKWARD_RIGHT, 0)
-#    forward_right_pwm.stop()
-#    forward_left_pwm.stop()
-#    backward_right_pwm.stop()
-#    backward_left_pwm.stop()
+#    io.output(FORWARD_LEFT, 0)
+#    io.output(BACKWARD_LEFT, 0)
+#    io.output(FORWARD_RIGHT, 0)
+#    io.output(BACKWARD_RIGHT, 0)
+    forward_right_pwm.stop()
+    forward_left_pwm.stop()
+    backward_right_pwm.stop()
+    backward_left_pwm.stop()
 
     s_left.close()
     s_right.close()
