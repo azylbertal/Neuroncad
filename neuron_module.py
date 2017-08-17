@@ -26,6 +26,7 @@ class Neuron(pygame.sprite.Sprite):
         self.screen = brn.screen
 
         self.rf = 0
+        self.axis = axis
         self.freq = None
         self.stdp = 0
         self.mod = neuron.h.Section()
@@ -53,20 +54,55 @@ class Neuron(pygame.sprite.Sprite):
             self.image = pygame.image.load("static/ir_sensor.bmp").convert()
             self.super_type = 'sensor'
         elif tp == 'gyro':
-            self.image = pygame.image.load("static/gyro.bmp").convert()
+            if axis == 'xpositive':
+                self.image = pygame.image.load("static/gyro_x_positive.bmp").convert()
+            if axis == 'xnegative':
+                self.image = pygame.image.load("static/gyro_x_negative.bmp").convert()
+            if axis == 'ypositive':
+                self.image = pygame.image.load("static/gyro_y_positive.bmp").convert()
+            if axis == 'ynegative':
+                self.image = pygame.image.load("static/gyro_y_negative.bmp").convert()
+            if axis == 'zpositive':
+                self.image = pygame.image.load("static/gyro_z_positive.bmp").convert()
+            if axis == 'znegative':
+                self.image = pygame.image.load("static/gyro_z_negative.bmp").convert()
+
             self.super_type = 'sensor'
-            self.axis=axis
             self.label=self.font.render(self.axis, 1, (0,0,0))
         elif tp == 'accel':
-            self.image = pygame.image.load("static/accel.bmp").convert()
+            if axis == 'xpositive':
+                self.image = pygame.image.load("static/accel_x_positive.bmp").convert()
+            if axis == 'xnegative':
+                self.image = pygame.image.load("static/accel_x_negative.bmp").convert()
+            if axis == 'ypositive':
+                self.image = pygame.image.load("static/accel_y_positive.bmp").convert()
+            if axis == 'ynegative':
+                self.image = pygame.image.load("static/accel_y_negative.bmp").convert()
+            if axis == 'zpositive':
+                self.image = pygame.image.load("static/accel_z_positive.bmp").convert()
+            if axis == 'znegative':
+                self.image = pygame.image.load("static/accel_z_negative.bmp").convert()
+            if 'magnitude' in axis:
+                self.image = pygame.image.load("static/accel.bmp").convert()
             self.super_type = 'sensor'
-            self.axis=axis
             self.label=self.font.render(self.axis, 1, (0,0,0))
 
         elif tp == 'magnet':
-            self.image = pygame.image.load("static/magnet.bmp").convert()
+            if axis == 'xpositive':
+                self.image = pygame.image.load("static/magnet_x_positive.bmp").convert()
+            if axis == 'xnegative':
+                self.image = pygame.image.load("static/magnet_x_negative.bmp").convert()
+            if axis == 'ypositive':
+                self.image = pygame.image.load("static/magnet_y_positive.bmp").convert()
+            if axis == 'ynegative':
+                self.image = pygame.image.load("static/magnet_y_negative.bmp").convert()
+            if axis == 'zpositive':
+                self.image = pygame.image.load("static/magnet_z_positive.bmp").convert()
+            if axis == 'znegative':
+                self.image = pygame.image.load("static/magnet_z_negative.bmp").convert()
+            if 'magnitude' in axis:
+                self.image = pygame.image.load("static/magnet.bmp").convert()
             self.super_type = 'sensor'
-            self.axis=axis
             self.label=self.font.render(self.axis, 1, (0,0,0))
 
         elif tp == 'auditory':
@@ -138,6 +174,7 @@ class pickledNeuron(object):
         self.nid = nrn.nid
         self.rf = nrn.rf
         self.freq = nrn.freq
+        self.axis = nrn.axis
         self.axons = nrn.pickled_axons()
 
 

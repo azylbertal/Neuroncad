@@ -96,25 +96,41 @@ def read_sensors():
 #    z_rest=np.mean(calibz)
 #    print 'End calibration'
 
-    while not shut_down.value:
-        conn_sens.send('1')
-        sens_dat = conn_sens.recv(38)
-        
-        prox_val.value = struct.unpack("H", sens_dat[0:2])[0]
+    if connected:
+        while not shut_down.value:
+            conn_sens.send('1')
+            sens_dat = conn_sens.recv(38)
+            
+            prox_val.value = struct.unpack("H", sens_dat[0:2])[0]
+    
+            gyrox.value = struct.unpack("f", sens_dat[2:6])[0]#-x_rest
+            gyroy.value = struct.unpack("f", sens_dat[6:10])[0]#-y_rest
+            gyroz.value = struct.unpack("f", sens_dat[10:14])[0]#-z_rest
+    
+            accelx.value = struct.unpack("f", sens_dat[14:18])[0]
+            accely.value = struct.unpack("f", sens_dat[18:22])[0]
+            accelz.value = struct.unpack("f", sens_dat[22:26])[0]
+    
+            magnetx.value = struct.unpack("f", sens_dat[26:30])[0]
+            magnetz.value = struct.unpack("f", sens_dat[30:34])[0]
+            magnety.value = struct.unpack("f", sens_dat[34:38])[0]
 
-        gyrox.value = struct.unpack("f", sens_dat[2:6])[0]#-x_rest
-        gyroy.value = struct.unpack("f", sens_dat[6:10])[0]#-y_rest
-        gyroz.value = struct.unpack("f", sens_dat[10:14])[0]#-z_rest
-
-        accelx.value = struct.unpack("f", sens_dat[14:18])[0]
-        accely.value = struct.unpack("f", sens_dat[18:22])[0]
-        accelz.value = struct.unpack("f", sens_dat[22:26])[0]
-
-        magnetx.value = struct.unpack("f", sens_dat[26:30])[0]
-        magnetz.value = struct.unpack("f", sens_dat[30:34])[0]
-        magnety.value = struct.unpack("f", sens_dat[34:38])[0]
-        
-
+    else:
+        while not shut_down.value:
+            prox_val.value = 0
+    
+            gyrox.value = 0
+            gyroy.value = 0
+            gyroz.value = 0
+    
+            accelx.value = 0
+            accely.value = 0
+            accelz.value = 0
+    
+            magnetx.value = 0
+            magnetz.value = 0
+            magnety.value = 0
+            
 def update_buffer(nrns, screen, x, y):
     print os.getpid()
 
@@ -128,23 +144,25 @@ def update_buffer(nrns, screen, x, y):
 #        scaledDown = pygame.transform.scale(
 #            catSurfaceObj, (int(cam_width), int(cam_height)))
 #        pixArray = pygame.surfarray.pixels3d(scaledDown)
-        conn_cam.send('1')
-        start_time=time()
-        i=0
-        packs=0
-        while i<(cam_width*cam_height):
-            pack = np.fromstring(conn_cam.recv(cam_width*cam_height), dtype='uint8')
-            buff[i:(i+len(pack))]=pack
-            i+=len(pack)
-            packs+=1
-        timing = time()-start_time
-        if timing > 0.1:
-            print timing, packs
-        np.copyto(img_buffer, np.reshape(buff, (cam_width, cam_height)))
-        im_array[:,:,0]= img_buffer
-        im_array[:,:,1]= img_buffer
-        im_array[:,:,2]= img_buffer
+        if connected:
+            conn_cam.send('1')
+            start_time=time()
+            i=0
+            while i<(cam_width*cam_height):
+                pack = np.fromstring(conn_cam.recv(cam_width*cam_height), dtype='uint8')
+                buff[i:(i+len(pack))]=pack
+                i+=len(pack)
                 
+            timing = time()-start_time
+            if timing > 0.1:
+                print timing
+           
+            np.copyto(img_buffer, np.reshape(buff, (cam_width, cam_height)))
+            im_array[:,:,0]= img_buffer
+            im_array[:,:,1]= img_buffer
+            im_array[:,:,2]= img_buffer
+        else:
+            im_array = np.zeros([cam_width, cam_height, 3])                
         pygame.surfarray.blit_array(pic, im_array.astype('int'))        
         pixArray = pygame.surfarray.pixels3d(pic)
 
@@ -200,16 +218,19 @@ def receptive_field(brn):
         if event.type == pygame.QUIT:
             going = False
             
-        conn_cam.send('1')
-        i=0
-        while i<(cam_width*cam_height):
-            pack = np.fromstring(conn_cam.recv(cam_width*cam_height), dtype='uint8')
-            buff[i:(i+len(pack))]=pack
-            i+=len(pack)
-        im_array[:,:,0]= np.reshape(buff, (cam_width, cam_height))
-        im_array[:,:,1]= np.reshape(buff, (cam_width, cam_height))
-        im_array[:,:,2]= np.reshape(buff, (cam_width, cam_height))
-                
+        if connected:
+            conn_cam.send('1')
+            i=0
+            while i<(cam_width*cam_height):
+                pack = np.fromstring(conn_cam.recv(cam_width*cam_height), dtype='uint8')
+                buff[i:(i+len(pack))]=pack
+                i+=len(pack)
+            im_array[:,:,0]= np.reshape(buff, (cam_width, cam_height))
+            im_array[:,:,1]= np.reshape(buff, (cam_width, cam_height))
+            im_array[:,:,2]= np.reshape(buff, (cam_width, cam_height))
+        
+        else:
+            im_array = np.zeros([cam_width, cam_height, 3])
         pygame.surfarray.blit_array(pic, im_array.astype('int'))        
 
         scaledUp = pygame.transform.scale(
@@ -238,13 +259,14 @@ def get_audio_freqs():
     freqs.fill(200.)    
     while not shut_down.value:
         buff=np.zeros(audio_bin, dtype='int16')
-        conn_mic.send('1')
-        i=0
-        while i<audio_bin:
-            pack = np.fromstring(conn_mic.recv(audio_bin), dtype='int16')
-            buff[i:(i+len(pack))]=pack
-            i+=len(pack)
-        np.copyto(freqs, np.abs(np.fft.fft(struct.unpack('<' + str(audio_bin) + 'h', buff))))
+        if connected:
+            conn_mic.send('1')
+            i=0
+            while i<audio_bin:
+                pack = np.fromstring(conn_mic.recv(audio_bin), dtype='int16')
+                buff[i:(i+len(pack))]=pack
+                i+=len(pack)
+            np.copyto(freqs, np.abs(np.fft.fft(struct.unpack('<' + str(audio_bin) + 'h', buff))))
         #print freqs[40]
         #print freqs[40]
 
@@ -330,27 +352,28 @@ class brain(object):
         self.stdp_max = 4000
 
     def __del__(self):
-        print 'closing camera stream'
-        conn_cam.send('c')
-        conn_cam.close()
-        s_cam.close()
-
-        print 'closing mic stream'
-        conn_mic.send('c')
-        conn_mic.close()
-        s_mic.close()
-        
-        print 'closing sensor streams'
-        conn_sens.send('c')
-        sleep(0.5)
-        conn_sens.close()
-        s_sens.close()
-        
-        print 'closing motor stream'
-        conn_lmotor.close()
-        conn_rmotor.close()
-        s_lmotor.close()
-        s_rmotor.close()
+        if connected:
+            print 'closing camera stream'
+            conn_cam.send('c')
+            conn_cam.close()
+            s_cam.close()
+    
+            print 'closing mic stream'
+            conn_mic.send('c')
+            conn_mic.close()
+            s_mic.close()
+            
+            print 'closing sensor streams'
+            conn_sens.send('c')
+            sleep(0.5)
+            conn_sens.close()
+            s_sens.close()
+            
+            print 'closing motor stream'
+            conn_lmotor.close()
+            conn_rmotor.close()
+            s_lmotor.close()
+            s_rmotor.close()
         
         print "brain object deleted"
         
@@ -371,7 +394,8 @@ class brain(object):
         last_nid = 0
         for counter, neur in enumerate(inf):
             nrn = Neuron(neur.rect.x, neur.rect.y, neur.tp, self,
-                         shift=False, nid=neur.nid, rf=neur.rf, freq=neur.freq)
+                         shift=False, nid=neur.nid, rf=neur.rf, freq=neur.freq,
+                         axis=neur.axis)
             self.updateCounts(neur.tp, 1)
             self.neurons.add(nrn)
             if neur.nid > last_nid:
@@ -389,8 +413,9 @@ class brain(object):
         return last_nid
 
     def stop_rec(self):
-        conn_lmotor.send(struct.pack("d", 0))
-        conn_rmotor.send(struct.pack("d", 0))
+        if connected:
+            conn_lmotor.send(struct.pack("d", 0))
+            conn_rmotor.send(struct.pack("d", 0))
         shut_down.value = True
         sleep(0.3)
         shut_down.value = False
@@ -674,7 +699,7 @@ class brain(object):
         fire_image_delay = 20
         plot_count = 0
         buttons = pygame.sprite.Group()
-        downflag = False
+        #downflag = False
         stop_button = pygame.sprite.Sprite()
         stop_button.image = pygame.image.load("static/stop.bmp").convert()
         stop_button.rect = stop_button.image.get_rect()
@@ -753,7 +778,7 @@ class brain(object):
                         m = 1.
                     else:
                         m = -1.
-                    print accelx.value
+                    #print accelx.value
                     if neur.axis[0]=='x':
                             neur.ext_stm.amp=(abs(accelx.value+m*abs(accelx.value))/2.)/accel_gain
                     elif neur.axis[0]=='y':
@@ -859,8 +884,9 @@ class brain(object):
                 if quant_right > 100 : quant_right = 100
                 if quant_right < -100 : quant_right = -100
 
-                conn_lmotor.send(struct.pack("h", quant_left))
-                conn_rmotor.send(struct.pack("h", quant_right))
+                if connected:
+                    conn_lmotor.send(struct.pack("h", quant_left))
+                    conn_rmotor.send(struct.pack("h", quant_right))
                 if abs(left_power) < 50 and abs(right_power) < 50:
                     motor_resting = True
                 else:
@@ -941,7 +967,7 @@ class brain(object):
 
 def main():
 
-    downSampleFactor = 5.
+    downSampleFactor = 10.
 
     brn = brain(downSampleFactor, 0.1)
     brn.build_loop()
@@ -985,30 +1011,35 @@ if __name__ == "__main__":
 #    print 'waiting for robot' 
 #    s_broad.close()
     
-    s_cam = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s_cam.bind((TCP_IP, CAMERA_TCP_PORT))
-    s_cam.listen(1)
-    conn_cam, addr_cam = s_cam.accept()
-
-    s_mic = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s_mic.bind((TCP_IP, MIC_TCP_PORT))
-    s_mic.listen(1)
-    conn_mic, addr_mic = s_mic.accept()
+    res = raw_input('Wait for sensors stream? (y/n)')
+    if res == 'y':
+        s_cam = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s_cam.bind((TCP_IP, CAMERA_TCP_PORT))
+        s_cam.listen(1)
+        conn_cam, addr_cam = s_cam.accept()
     
-    s_lmotor = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s_lmotor.bind((TCP_IP, LEFT_MOTOR_PORT))
-    s_lmotor.listen(1)
-    conn_lmotor, addr_lmotor = s_lmotor.accept()
-
-    s_rmotor = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s_rmotor.bind((TCP_IP, RIGHT_MOTOR_PORT))
-    s_rmotor.listen(1)
-    conn_rmotor, addr_rmotor = s_rmotor.accept()
-
-    s_sens = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s_sens.bind((TCP_IP, SENS_TCP_PORT))
-    s_sens.listen(1)
-    conn_sens, addr_sens = s_sens.accept()
-    print 'finished connecting'
+        s_mic = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s_mic.bind((TCP_IP, MIC_TCP_PORT))
+        s_mic.listen(1)
+        conn_mic, addr_mic = s_mic.accept()
+        
+        s_lmotor = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s_lmotor.bind((TCP_IP, LEFT_MOTOR_PORT))
+        s_lmotor.listen(1)
+        conn_lmotor, addr_lmotor = s_lmotor.accept()
+    
+        s_rmotor = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s_rmotor.bind((TCP_IP, RIGHT_MOTOR_PORT))
+        s_rmotor.listen(1)
+        conn_rmotor, addr_rmotor = s_rmotor.accept()
+    
+        s_sens = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s_sens.bind((TCP_IP, SENS_TCP_PORT))
+        s_sens.listen(1)
+        conn_sens, addr_sens = s_sens.accept()
+        connected = True;
+        print 'finished connecting'
+    else:
+        connected = False
     
     main()
