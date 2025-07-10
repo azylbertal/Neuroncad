@@ -5,6 +5,7 @@
 
 * Please use the issues report system
 
+Example video: https://www.youtube.com/watch?v=vx5QH23PIk8
 ### Setting up ###
 
 * Unpack repository files
